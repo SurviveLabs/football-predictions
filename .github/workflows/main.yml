@@ -2,8 +2,8 @@ name: Update Predictions
 
 on:
   schedule:
-    - cron: '0 6 * * *'
-  workflow_dispatch:
+    - cron: '0 6 * * *'  # Runs daily at 6:00 AM UTC
+  workflow_dispatch:     # Enables manual execution button
 
 permissions:
   contents: write
