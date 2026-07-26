@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Football Predictions</title>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Predictions">
+
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f6f8;
+            margin: 0;
+            padding: 16px;
+            color: #111827;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            font-size: 1.5rem;
+            margin: 10px 0 20px 0;
+            color: #1a1a1a;
+        }
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .filters {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        .filter-btn {
+            flex: 1;
+            background: #e5e7eb;
+            border: none;
+            padding: 10px 0;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+        .filter-btn.active, .filter-btn:hover {
+            background: #2563eb;
+            color: white;
+        }
+        .copy-all-btn {
+            width: 100%;
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        .copy-all-btn:hover {
+            background: #059669;
+        }
+        .grid {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border-left: 5px solid #2563eb;
+            position: relative;
+        }
+        .badge {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            background: #fef3c7;
+            color: #d97706;
+            font-size: 0.75rem;
+            font-weight: 800;
+            padding: 4px 8px;
+            border-radius: 8px;
+            text-transform: uppercase;
+        }
+        .league {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: #6b7280;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            padding-right: 85px;
+        }
+        .match-date-time {
+            font-size: 0.85rem;
+            color: #2563eb;
+            font-weight: 700;
+            margin: 6px 0 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .teams {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 12px;
+            line-height: 1.3;
+        }
+        .prediction-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #eff6ff;
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+        .pick {
+            color: #1d4ed8;
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+        .confidence {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+        .card-copy-btn {
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            color: #374151;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s ease;
+        }
+        .card-copy-btn:hover {
+            background: #e5e7eb;
+        }
+        .empty-state {
+            text-align: center;
+            color: #6b7280;
+            margin-top: 40px;
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>⚽ Football Predictions</h1>
+
+        <div class="controls">
+            <div class="filters">
+                <button class="filter-btn active" onclick="filterMatches('all', this)">All Games</button>
+                <button class="filter-btn" onclick="filterMatches('top5', this)">🔥 Top 5</button>
+                <button class="filter-btn" onclick="filterMatches('top10', this)">⭐ Top 10</button>
+            </div>
+            <button class="copy-all-btn" onclick="copyAllVisible(this)">📋 Copy Ticket</button>
+        </div>
+
+        <div id="predictions-container" class="grid">
+            <p class="empty-state">Loading predictions...</p>
+        </div>
+    </div>
+
+    <script>
+        let allMatches = [];
+        let currentlyDisplayed = [];
+
+        function formatMatchDateAndTime(isoString) {
+            if (!isoString) return "Date & Time TBD";
+            try {
+                const matchDate = new Date(isoString);
+                if (isNaN(matchDate.getTime())) return "Date & Time TBD";
+
+                const monthName = matchDate.toLocaleDateString('en-US', { month: 'long' });
+                const dayNum = matchDate.getDate();
+                const timeStr = matchDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+
+                const now = new Date();
+                const isToday = matchDate.toDateString() === now.toDateString();
+
+                if (isToday) {
+                    return `Today, ${monthName} ${dayNum} • ${timeStr}`;
+                } else {
+                    return `${monthName} ${dayNum} • ${timeStr}`;
+                }
+            } catch (e) {
+                return "Date & Time TBD";
+            }
+        }
+
+        async function loadPredictions() {
+            const container = document.getElementById('predictions-container');
+
+            try {
+                const response = await fetch(`predictions.json?nocache=${Date.now()}`);
+                if (!response.ok) throw new Error("Could not load predictions");
+
+                const data = await response.json();
+                allMatches = Array.isArray(data) ? data : (data.predictions || []);
+                
+                filterMatches('all');
+            } catch (error) {
+                console.error("Error loading predictions:", error);
+                container.innerHTML = `<p class="empty-state">Failed to load predictions.</p>`;
+            }
+        }
+
+        function filterMatches(category, btnElement) {
+            if (btnElement) {
+                document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+                btnElement.classList.add('active');
+            }
+
+            if (category === 'top5') {
+                currentlyDisplayed = allMatches.slice(0, 5);
+            } else if (category === 'top10') {
+                currentlyDisplayed = allMatches.slice(0, 10);
+            } else {
+                currentlyDisplayed = [...allMatches];
+            }
+
+            renderMatches(currentlyDisplayed);
+        }
+
+        function renderMatches(matches) {
+            const container = document.getElementById('predictions-container');
+
+            if (!matches || matches.length === 0) {
+                container.innerHTML = '<p class="empty-state">No major matches found today.</p>';
+                return;
+            }
+
+            container.innerHTML = matches.map((match, index) => {
+                const formattedDateTime = formatMatchDateAndTime(match.date);
+                const textToCopy = `⚽ ${match.home_team} vs ${match.away_team}\n📅 Date: ${formattedDateTime}\n👉 Pick: ${match.prediction} (${match.confidence})`;
+                const encodedText = encodeURIComponent(textToCopy);
+
+                return `
+                    <div class="card">
+                        <div>
+                            ${index < 5 ? `<span class="badge">#${index + 1} TOP PICK</span>` : ''}
+                            <div class="league">${match.league || 'Football Match'}</div>
+                            <div class="match-date-time">📅 ${formattedDateTime}</div>
+                            <div class="teams">${match.home_team} vs ${match.away_team}</div>
+                            <div class="prediction-box">
+                                <span class="pick">${match.prediction}</span>
+                                <span class="confidence">${match.confidence}</span>
+                            </div>
+                        </div>
+                        <button class="card-copy-btn" data-text="${encodedText}" onclick="copySingleMatch(this)">
+                            📋 Copy Match
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function executeCopy(text, successCallback) {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(successCallback).catch(() => {
+                    fallbackCopy(text, successCallback);
+                });
+            } else {
+                fallbackCopy(text, successCallback);
+            }
+        }
+
+        function fallbackCopy(text, successCallback) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-9999px";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                successCallback();
+            } catch (err) {
+                console.error('Fallback copy failed', err);
+            }
+            document.body.removeChild(textArea);
+        }
+
+        function copySingleMatch(btnElement) {
+            const rawText = decodeURIComponent(btnElement.getAttribute('data-text') || '');
+            executeCopy(rawText, () => {
+                const originalText = btnElement.innerText;
+                btnElement.innerText = "Copied! ✅";
+                btnElement.style.background = "#10b981";
+                btnElement.style.color = "#ffffff";
+                btnElement.style.borderColor = "#10b981";
+
+                setTimeout(() => {
+                    btnElement.innerText = originalText;
+                    btnElement.style.background = "";
+                    btnElement.style.color = "";
+                    btnElement.style.borderColor = "";
+                }, 2000);
+            });
+        }
+
+        function copyAllVisible(btnElement) {
+            if (!currentlyDisplayed || currentlyDisplayed.length === 0) return;
+
+            let formattedList = "⚽ TODAY'S PREDICTIONS SLIP ⚽\n\n";
+            currentlyDisplayed.forEach((match, i) => {
+                const dateTimeStr = formatMatchDateAndTime(match.date);
+                formattedList += `${i + 1}. ${match.home_team} vs ${match.away_team}\n   📅 Date: ${dateTimeStr}\n   👉 Pick: ${match.prediction} (${match.confidence})\n\n`;
+            });
+
+            executeCopy(formattedList.trim(), () => {
+                const originalText = btnElement.innerText;
+                btnElement.innerText = "Ticket Copied! ✅";
+                btnElement.style.background = "#059669";
+
+                setTimeout(() => {
+                    btnElement.innerText = originalText;
+                    btnElement.style.background = "";
+                }, 2000);
+            });
+        }
+
+        loadPredictions();
+    </script>
+
+</body>
+  </html>
+
