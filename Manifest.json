@@ -1,0 +1,17 @@
+{
+  "name": "Football Predictions",
+  "short_name": "Predictions",
+  "description": "Daily Football Match Predictions",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f4f6f8",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/53/53283.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
+
