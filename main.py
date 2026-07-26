@@ -11,18 +11,18 @@ HEADERS = {
     "x-apisports-key": API_KEY
 }
 
-# Fixed WAT (UTC+1 / West Africa Time) offset - zero external dependency risk
+# Fixed WAT (UTC+1 / West Africa Time)
 WAT_TIMEZONE = timezone(timedelta(hours=1))
 LOCAL_TIMEZONE_NAME = "Africa/Lagos"
 
-# Whitelist of Top Major Leagues
+# Whitelist of Major Competitions + Pre-Season Club Friendlies
 MAJOR_LEAGUE_IDS = {
-    2, 3, 848,          # UEFA Champions League, Europa League, Conference League
-    39, 40,             # Premier League, Championship (England)
-    140, 141,           # La Liga, Segunda División (Spain)
-    135, 136,           # Serie A, Serie B (Italy)
-    78, 79,             # Bundesliga, 2. Bundesliga (Germany)
-    61, 62,             # Ligue 1, Ligue 2 (France)
+    2, 3, 848,          # Champions League, Europa League, Conference League
+    39, 40, 45, 48,     # Premier League, Championship, FA Cup, League Cup (England)
+    140, 141, 143,      # La Liga, Segunda División, Copa del Rey (Spain)
+    135, 136, 137,      # Serie A, Serie B, Coppa Italia (Italy)
+    78, 79, 81,         # Bundesliga, 2. Bundesliga, DFB-Pokal (Germany)
+    61, 62, 66,         # Ligue 1, Ligue 2, Coupe de France (France)
     88,                 # Eredivisie (Netherlands)
     94,                 # Primeira Liga (Portugal)
     253,                # MLS (USA)
@@ -31,12 +31,14 @@ MAJOR_LEAGUE_IDS = {
     128,                # Liga Profesional Argentina
     288,                # NPFL (Nigeria)
     1, 4, 9, 6, 15,     # World Cup, Euros, Copa America, AFCON, Nations League
+    667,                # Club Friendlies (Pre-season top team fixtures)
 }
 
+# Exclude non-major or noise matches
 EXCLUDE_KEYWORDS = [
-    "youth", "u17", "u19", "u20", "u21", "u23", 
+    "youth", "u17", "u18", "u19", "u20", "u21", "u23", 
     "reserve", "women", "wnl", "simulated", 
-    "cyber", "electronic", "friendly", "amateur"
+    "cyber", "electronic", "amateur", "3rd", "4th"
 ]
 
 def fetch_fixtures():
@@ -44,45 +46,41 @@ def fetch_fixtures():
         print("❌ Error: FOOTBALL_API_KEY environment variable is missing.")
         return []
 
-    # Get local WAT date
-    today_local = datetime.now(WAT_TIMEZONE).strftime("%Y-%m-%d")
-    print(f"🔍 Fetching fixtures for date: {today_local}")
+    today_dt = datetime.now(WAT_TIMEZONE)
+    today_str = today_dt.strftime("%Y-%m-%d")
+    tomorrow_str = (today_dt + timedelta(days=1)).strftime("%Y-%m-%d")
 
-    try:
-        params = {
-            "date": today_local,
-            "timezone": LOCAL_TIMEZONE_NAME
-        }
-        response = requests.get(API_URL, headers=HEADERS, params=params)
-        response.raise_for_status()
-        data = response.json().get("response", [])
+    all_fixtures = []
 
-        # Fallback to upcoming fixtures if today has no matches scheduled
-        if not data:
-            print("⚠️ No matches found for today. Fetching upcoming fixtures...")
-            fallback_params = {"next": "40", "timezone": LOCAL_TIMEZONE_NAME}
-            fallback_resp = requests.get(API_URL, headers=HEADERS, params=fallback_params)
-            fallback_resp.raise_for_status()
-            data = fallback_resp.json().get("response", [])
+    # STRICTLY fetch Today and Tomorrow only. No random future games.
+    for date_str in [today_str, tomorrow_str]:
+        print(f"🔍 Fetching fixtures for date: {date_str}")
+        try:
+            params = {
+                "date": date_str,
+                "timezone": LOCAL_TIMEZONE_NAME
+            }
+            response = requests.get(API_URL, headers=HEADERS, params=params)
+            response.raise_for_status()
+            data = response.json().get("response", [])
+            all_fixtures.extend(data)
+        except Exception as e:
+            print(f"❌ API Request Failed for {date_str}: {e}")
 
-        return data
-    except Exception as e:
-        print(f"❌ API Request Failed: {e}")
-        return []
+    return all_fixtures
 
-def is_major_fixture(item):
+def is_valid_fixture(item):
     league = item.get("league", {})
     league_id = league.get("id")
     league_name = league.get("name", "").lower()
 
+    # Filter out youth, reserve, women, or e-sports
     for keyword in EXCLUDE_KEYWORDS:
         if keyword in league_name:
             return False
 
+    # Allow if it's in our major whitelist (includes pre-season Club Friendlies)
     if league_id in MAJOR_LEAGUE_IDS:
-        return True
-
-    if league.get("type", "").lower() == "league":
         return True
 
     return False
@@ -102,11 +100,8 @@ def generate_market_prediction(fixture_id, home_team, away_team):
     return selected["pick"], selected["confidence_num"]
 
 def process_fixtures(fixtures):
+    filtered_fixtures = [f for f in fixtures if is_valid_fixture(f)]
     predictions_data = []
-    filtered_fixtures = [f for f in fixtures if is_major_fixture(f)]
-    
-    if not filtered_fixtures:
-        filtered_fixtures = fixtures
 
     for item in filtered_fixtures:
         fixture = item.get("fixture", {})
@@ -132,25 +127,27 @@ def process_fixtures(fixtures):
         }
         predictions_data.append(match_info)
 
-    # Sort descending by confidence score
+    # 1. Sort by confidence to assign Top Pick ranks
     predictions_data.sort(key=lambda x: x["confidence_num"], reverse=True)
-
     for index, match in enumerate(predictions_data, start=1):
         match["rank"] = index
         match["is_top_5"] = index <= 5
         match["is_top_10"] = index <= 10
 
+    # 2. Sort chronologically by Kickoff Time
+    predictions_data.sort(key=lambda x: x.get("date", ""))
+
     return predictions_data
 
 def main():
-    print("⚽ Fetching fixtures from API-Football...")
+    print("⚽ Fetching real fixtures from API-Football...")
     raw_fixtures = fetch_fixtures()
 
     if raw_fixtures:
         predictions = process_fixtures(raw_fixtures)
-        print(f"✅ Processed {len(predictions)} predictions.")
+        print(f"✅ Processed {len(predictions)} verified predictions.")
     else:
-        print("⚠️ No matches found. Outputting empty array.")
+        print("⚠️ No matches scheduled today or tomorrow.")
         predictions = []
 
     with open("predictions.json", "w", encoding="utf-8") as f:
