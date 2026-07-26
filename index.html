@@ -6,7 +6,7 @@
     <title>Football Predictions</title>
 
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#2563eb">
+    <meta name="theme-color" content="#1e293b">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
@@ -14,144 +14,229 @@
         * { box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f4f6f8;
+            background-color: #0f172a;
             margin: 0;
-            padding: 16px;
-            color: #111827;
+            padding: 14px;
+            color: #f8fafc;
         }
         .container {
-            max-width: 600px;
+            max-width: 500px;
             margin: 0 auto;
         }
-        h1 {
+        header {
             text-align: center;
-            font-size: 1.5rem;
-            margin: 10px 0 20px 0;
-            color: #1a1a1a;
+            margin-bottom: 16px;
         }
-        .controls {
+        h1 {
+            font-size: 1.4rem;
+            margin: 0 0 4px 0;
+            color: #ffffff;
+            font-weight: 800;
+        }
+        .sub-header {
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+        
+        /* Generators Bar */
+        .generators {
             display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-bottom: 20px;
+            gap: 10px;
+            margin-bottom: 14px;
         }
+        .gen-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.88rem;
+            cursor: pointer;
+            color: #ffffff;
+            transition: transform 0.1s ease;
+        }
+        .gen-btn:active { transform: scale(0.98); }
+        .btn-3odds { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+        .btn-5odds { background: linear-gradient(135deg, #d97706, #b45309); }
+
+        /* Filter Pills */
         .filters {
             display: flex;
-            justify-content: space-between;
-            gap: 8px;
+            gap: 6px;
+            margin-bottom: 16px;
+            overflow-x: auto;
+            padding-bottom: 4px;
         }
         .filter-btn {
             flex: 1;
-            background: #e5e7eb;
-            border: none;
-            padding: 10px 0;
+            white-space: nowrap;
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #94a3b8;
+            padding: 8px 14px;
             border-radius: 20px;
             font-weight: 600;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             cursor: pointer;
-            transition: all 0.2s ease;
             text-align: center;
         }
         .filter-btn.active {
-            background: #2563eb;
-            color: white;
+            background: #3b82f6;
+            color: #ffffff;
+            border-color: #3b82f6;
         }
-        .copy-all-btn {
-            width: 100%;
-            background: #10b981;
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: 0.95rem;
-            cursor: pointer;
-            transition: background 0.2s ease;
-        }
-        .copy-all-btn:hover { background: #059669; }
+
+        /* Match Cards */
         .grid {
             display: flex;
             flex-direction: column;
-            gap: 14px;
+            gap: 12px;
         }
         .card {
-            background: #ffffff;
-            border-radius: 12px;
-            padding: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            border-left: 5px solid #2563eb;
+            background: #1e293b;
+            border-radius: 14px;
+            padding: 14px;
+            border: 1px solid #334155;
             position: relative;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        .league {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            color: #38bdf8;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            padding-right: 70px;
         }
         .badge {
             position: absolute;
-            top: 14px;
-            right: 14px;
-            background: #fef3c7;
-            color: #d97706;
-            font-size: 0.75rem;
+            top: 12px;
+            right: 12px;
+            background: rgba(245, 158, 11, 0.15);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            font-size: 0.7rem;
             font-weight: 800;
-            padding: 4px 8px;
-            border-radius: 8px;
-            text-transform: uppercase;
-        }
-        .league {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            color: #6b7280;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            padding-right: 85px;
+            padding: 3px 7px;
+            border-radius: 6px;
         }
         .match-date-time {
-            font-size: 0.85rem;
-            color: #2563eb;
-            font-weight: 700;
-            margin: 6px 0 10px 0;
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin: 4px 0 10px 0;
         }
         .teams {
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             font-weight: 700;
-            color: #111827;
+            color: #ffffff;
             margin-bottom: 12px;
-            line-height: 1.3;
         }
         .prediction-box {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: #eff6ff;
+            background: #0f172a;
             padding: 10px 12px;
-            border-radius: 8px;
-            margin-bottom: 12px;
+            border-radius: 10px;
+            border: 1px solid #1e293b;
+            margin-bottom: 10px;
         }
-        .pick { color: #1d4ed8; font-weight: 700; font-size: 0.95rem; }
-        .confidence { background: #dbeafe; color: #1e40af; padding: 3px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: 700; }
+        .pick { color: #60a5fa; font-weight: 700; font-size: 0.9rem; }
+        .meta-tags { display: flex; gap: 6px; align-items: center; }
+        .odds-tag { background: #16a34a; color: #ffffff; font-weight: 800; font-size: 0.78rem; padding: 3px 7px; border-radius: 6px; }
+        .confidence-tag { background: #334155; color: #cbd5e1; font-weight: 700; font-size: 0.75rem; padding: 3px 6px; border-radius: 6px; }
+
         .card-copy-btn {
-            background: #f3f4f6;
-            border: 1px solid #d1d5db;
-            color: #374151;
-            padding: 10px;
+            background: #334155;
+            border: none;
+            color: #f1f5f9;
+            padding: 9px;
             border-radius: 8px;
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             font-weight: 600;
             cursor: pointer;
             width: 100%;
         }
-        .empty-state { text-align: center; color: #6b7280; margin-top: 40px; font-size: 0.95rem; }
+
+        /* Modal / Ticket Drawer */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.75);
+            align-items: flex-end;
+            z-index: 1000;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: #1e293b;
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            border-radius: 20px 20px 0 0;
+            padding: 20px;
+            max-height: 85vh;
+            overflow-y: auto;
+            border-top: 1px solid #475569;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+        .modal-title { font-size: 1.1rem; font-weight: 800; color: #ffffff; }
+        .close-btn { background: none; border: none; color: #94a3b8; font-size: 1.4rem; cursor: pointer; }
+        .ticket-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+        .ticket-item {
+            background: #0f172a;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+        }
+        .ticket-item-teams { font-weight: 700; color: #ffffff; margin-bottom: 2px; }
+        .ticket-item-pick { color: #38bdf8; display: flex; justify-content: space-between; font-weight: 600; }
+        .total-odds-box {
+            background: #15803d;
+            color: #ffffff;
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 800;
+            font-size: 1rem;
+            margin-bottom: 12px;
+        }
+        .copy-ticket-btn {
+            width: 100%;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+        .empty-state { text-align: center; color: #94a3b8; margin-top: 40px; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>⚽ Football Predictions</h1>
+        <header>
+            <h1>⚽ Football Predictions</h1>
+            <div class="sub-header">Daily AI Predictions & Odds Ticket Generator</div>
+        </header>
 
-        <div class="controls">
-            <div class="filters">
-                <button class="filter-btn active" onclick="filterMatches('all', this)">All Games</button>
-                <button class="filter-btn" onclick="filterMatches('top5', this)">🔥 Top 5</button>
-                <button class="filter-btn" onclick="filterMatches('top10', this)">⭐ Top 10</button>
-            </div>
-            <button class="copy-all-btn" onclick="copyAllVisible(this)">📋 Copy Ticket</button>
+        <div class="generators">
+            <button class="gen-btn btn-3odds" onclick="generateTicket(3.0)">🎯 Generate 3-Odds</button>
+            <button class="gen-btn btn-5odds" onclick="generateTicket(5.0)">🔥 Generate 5-Odds</button>
+        </div>
+
+        <div class="filters">
+            <button class="filter-btn active" onclick="filterMatches('all', this)">All Games</button>
+            <button class="filter-btn" onclick="filterMatches('top5', this)">🔥 Top Picks</button>
+            <button class="filter-btn" onclick="filterMatches('highOdds', this)">📈 Higher Odds</button>
         </div>
 
         <div id="predictions-container" class="grid">
@@ -159,26 +244,39 @@
         </div>
     </div>
 
+    <div id="ticket-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modal-ticket-title">Generated Ticket Slip</div>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="ticket-items" class="ticket-list"></div>
+            <div id="total-odds-box" class="total-odds-box">Total Odds: 0.00</div>
+            <button id="copy-slip-btn" class="copy-ticket-btn" onclick="copyGeneratedTicket()">📋 Copy Ticket Slip</button>
+        </div>
+    </div>
+
     <script>
         let allMatches = [];
-        let currentlyDisplayed = [];
+        let generatedTicketMatches = [];
+        let generatedTotalOdds = 1.0;
 
-        function formatMatchDateAndTime(isoString) {
-            if (!isoString) return "Date & Time TBD";
+        function formatMatchDateTime(isoString) {
+            if (!isoString) return "Date TBD";
             try {
-                const matchDate = new Date(isoString);
-                if (isNaN(matchDate.getTime())) return "Date & Time TBD";
+                const dt = new Date(isoString);
+                if (isNaN(dt.getTime())) return "Date TBD";
 
-                const monthName = matchDate.toLocaleDateString('en-US', { month: 'long' });
-                const dayNum = matchDate.getDate();
-                const timeStr = matchDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+                const month = dt.toLocaleDateString('en-US', { month: 'short' });
+                const day = dt.getDate();
+                const time = dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 
                 const now = new Date();
-                const isToday = matchDate.toDateString() === now.toDateString();
+                const isToday = dt.toDateString() === now.toDateString();
 
-                return isToday ? `Today, ${monthName} ${dayNum} • ${timeStr}` : `${monthName} ${dayNum} • ${timeStr}`;
+                return isToday ? `Today • ${time}` : `${month} ${day} • ${time}`;
             } catch (e) {
-                return "Date & Time TBD";
+                return "Date TBD";
             }
         }
 
@@ -186,13 +284,12 @@
             const container = document.getElementById('predictions-container');
             try {
                 const response = await fetch(`predictions.json?nocache=${Date.now()}`);
-                if (!response.ok) throw new Error("Could not load predictions");
+                if (!response.ok) throw new Error("Failed to fetch predictions");
 
                 const data = await response.json();
                 allMatches = Array.isArray(data) ? data : (data.predictions || []);
-                filterMatches('all');
+                renderMatches(allMatches);
             } catch (error) {
-                console.error("Error loading predictions:", error);
                 container.innerHTML = `<p class="empty-state">Failed to load predictions.</p>`;
             }
         }
@@ -203,43 +300,42 @@
                 btnElement.classList.add('active');
             }
 
+            let filtered = [...allMatches];
             if (category === 'top5') {
-                currentlyDisplayed = allMatches.slice(0, 5);
-            } else if (category === 'top10') {
-                currentlyDisplayed = allMatches.slice(0, 10);
-            } else {
-                currentlyDisplayed = [...allMatches];
+                filtered = [...allMatches].sort((a,b) => b.confidence_num - a.confidence_num).slice(0, 5);
+            } else if (category === 'highOdds') {
+                filtered = [...allMatches].filter(m => (m.odds || 1.0) >= 1.60);
             }
 
-            renderMatches(currentlyDisplayed);
+            renderMatches(filtered);
         }
 
         function renderMatches(matches) {
             const container = document.getElementById('predictions-container');
-
             if (!matches || matches.length === 0) {
                 container.innerHTML = '<p class="empty-state">No major matches found today.</p>';
                 return;
             }
 
-            container.innerHTML = matches.map((match, index) => {
-                const formattedDateTime = formatMatchDateAndTime(match.date);
-                const textToCopy = `⚽ ${match.home_team} vs ${match.away_team}\n📅 Date: ${formattedDateTime}\n👉 Pick: ${match.prediction} (${match.confidence})`;
-                const encodedText = encodeURIComponent(textToCopy);
+            container.innerHTML = matches.map((match) => {
+                const formattedDT = formatMatchDateTime(match.date);
+                const oddsVal = match.odds ? match.odds.toFixed(2) : '1.50';
+                const textToCopy = `⚽ ${match.home_team} vs ${match.away_team}\n📅 ${formattedDT}\n👉 Pick: ${match.prediction} (@${oddsVal})`;
 
                 return `
                     <div class="card">
-                        <div>
-                            ${index < 5 ? `<span class="badge">#${index + 1} TOP PICK</span>` : ''}
-                            <div class="league">${match.league || 'Football Match'}</div>
-                            <div class="match-date-time">📅 ${formattedDateTime}</div>
-                            <div class="teams">${match.home_team} vs ${match.away_team}</div>
-                            <div class="prediction-box">
-                                <span class="pick">${match.prediction}</span>
-                                <span class="confidence">${match.confidence}</span>
+                        ${match.rank && match.rank <= 5 ? `<span class="badge">#${match.rank} TOP PICK</span>` : ''}
+                        <div class="league">${match.league || 'Football'}</div>
+                        <div class="match-date-time">📅 ${formattedDT}</div>
+                        <div class="teams">${match.home_team} vs ${match.away_team}</div>
+                        <div class="prediction-box">
+                            <span class="pick">${match.prediction}</span>
+                            <div class="meta-tags">
+                                <span class="odds-tag">@ ${oddsVal}</span>
+                                <span class="confidence-tag">${match.confidence}</span>
                             </div>
                         </div>
-                        <button class="card-copy-btn" data-text="${encodedText}" onclick="copySingleMatch(this)">
+                        <button class="card-copy-btn" onclick="executeCopy('${encodeURIComponent(textToCopy)}', this)">
                             📋 Copy Match
                         </button>
                     </div>
@@ -247,17 +343,80 @@
             }).join('');
         }
 
-        function executeCopy(text, successCallback) {
+        function generateTicket(targetOdds) {
+            if (!allMatches || allMatches.length === 0) return;
+
+            // Sort matches by highest confidence first
+            const sortedByConfidence = [...allMatches].sort((a, b) => b.confidence_num - a.confidence_num);
+            
+            generatedTicketMatches = [];
+            generatedTotalOdds = 1.0;
+
+            for (let match of sortedByConfidence) {
+                const matchOdds = match.odds || 1.50;
+                generatedTicketMatches.push(match);
+                generatedTotalOdds *= matchOdds;
+
+                if (generatedTotalOdds >= targetOdds) break;
+            }
+
+            // Render Modal Slip
+            const itemsContainer = document.getElementById('ticket-items');
+            itemsContainer.innerHTML = generatedTicketMatches.map((m, i) => `
+                <div class="ticket-item">
+                    <div class="ticket-item-teams">${i + 1}. ${m.home_team} vs ${m.away_team}</div>
+                    <div class="ticket-item-pick">
+                        <span>👉 ${m.prediction}</span>
+                        <span>@ ${(m.odds || 1.50).toFixed(2)}</span>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('modal-ticket-title').innerText = `🎯 Target Ticket (~${targetOdds} Odds)`;
+            document.getElementById('total-odds-box').innerText = `Total Combined Odds: ${generatedTotalOdds.toFixed(2)}`;
+            document.getElementById('ticket-modal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('ticket-modal').classList.remove('active');
+        }
+
+        function copyGeneratedTicket() {
+            if (!generatedTicketMatches || generatedTicketMatches.length === 0) return;
+
+            let slipText = `⚽ PREDICTION TICKET SLIP ⚽\n\n`;
+            generatedTicketMatches.forEach((m, i) => {
+                slipText += `${i + 1}. ${m.home_team} vs ${m.away_team}\n   👉 Pick: ${m.prediction} (@${(m.odds || 1.50).toFixed(2)})\n\n`;
+            });
+            slipText += `🔥 TOTAL COMBINED ODDS: ${generatedTotalOdds.toFixed(2)}`;
+
+            const copyBtn = document.getElementById('copy-slip-btn');
+            executeCopy(encodeURIComponent(slipText), copyBtn, "Ticket Copied! ✅");
+        }
+
+        function executeCopy(encodedText, btnElement, successMsg = "Copied! ✅") {
+            const text = decodeURIComponent(encodedText);
+            const originalText = btnElement.innerText;
+
+            const callback = () => {
+                btnElement.innerText = successMsg;
+                btnElement.style.background = "#16a34a";
+                btnElement.style.color = "#ffffff";
+                setTimeout(() => {
+                    btnElement.innerText = originalText;
+                    btnElement.style.background = "";
+                    btnElement.style.color = "";
+                }, 2000);
+            };
+
             if (navigator.clipboard && window.isSecureContext) {
-                navigator.clipboard.writeText(text).then(successCallback).catch(() => {
-                    fallbackCopy(text, successCallback);
-                });
+                navigator.clipboard.writeText(text).then(callback).catch(() => fallbackCopy(text, callback));
             } else {
-                fallbackCopy(text, successCallback);
+                fallbackCopy(text, callback);
             }
         }
 
-        function fallbackCopy(text, successCallback) {
+        function fallbackCopy(text, callback) {
             const textArea = document.createElement("textarea");
             textArea.value = text;
             textArea.style.position = "fixed";
@@ -265,50 +424,11 @@
             document.body.appendChild(textArea);
             textArea.focus();
             textArea.select();
-            try {
-                document.execCommand('copy');
-                successCallback();
-            } catch (err) {}
+            try { document.execCommand('copy'); callback(); } catch (err) {}
             document.body.removeChild(textArea);
-        }
-
-        function copySingleMatch(btnElement) {
-            const rawText = decodeURIComponent(btnElement.getAttribute('data-text') || '');
-            executeCopy(rawText, () => {
-                const originalText = btnElement.innerText;
-                btnElement.innerText = "Copied! ✅";
-                btnElement.style.background = "#10b981";
-                btnElement.style.color = "#ffffff";
-                setTimeout(() => {
-                    btnElement.innerText = originalText;
-                    btnElement.style.background = "";
-                    btnElement.style.color = "";
-                }, 2000);
-            });
-        }
-
-        function copyAllVisible(btnElement) {
-            if (!currentlyDisplayed || currentlyDisplayed.length === 0) return;
-
-            let formattedList = "⚽ TODAY'S PREDICTIONS SLIP ⚽\n\n";
-            currentlyDisplayed.forEach((match, i) => {
-                const dateTimeStr = formatMatchDateAndTime(match.date);
-                formattedList += `${i + 1}. ${match.home_team} vs ${match.away_team}\n   📅 Date: ${dateTimeStr}\n   👉 Pick: ${match.prediction} (${match.confidence})\n\n`;
-            });
-
-            executeCopy(formattedList.trim(), () => {
-                const originalText = btnElement.innerText;
-                btnElement.innerText = "Ticket Copied! ✅";
-                btnElement.style.background = "#059669";
-                setTimeout(() => {
-                    btnElement.innerText = originalText;
-                    btnElement.style.background = "";
-                }, 2000);
-            });
         }
 
         loadPredictions();
     </script>
-
 </body>
 </html>
