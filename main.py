@@ -3,6 +3,7 @@ import json
 import requests
 from datetime import datetime, timezone, timedelta
 
+# API Configuration
 API_KEY = os.environ.get("FOOTBALL_API_KEY")
 API_URL = "https://v3.football.api-sports.io/fixtures"
 
@@ -10,11 +11,11 @@ HEADERS = {
     "x-apisports-key": API_KEY
 }
 
-# Fixed WAT (UTC+1) timezone offset
+# Fixed WAT (UTC+1 / West Africa Time) offset - zero external dependency risk
 WAT_TIMEZONE = timezone(timedelta(hours=1))
 LOCAL_TIMEZONE_NAME = "Africa/Lagos"
 
-# Whitelist of Major Top-Tier Leagues
+# Whitelist of Top Major Leagues
 MAJOR_LEAGUE_IDS = {
     2, 3, 848,          # UEFA Champions League, Europa League, Conference League
     39, 40,             # Premier League, Championship (England)
@@ -43,6 +44,7 @@ def fetch_fixtures():
         print("❌ Error: FOOTBALL_API_KEY environment variable is missing.")
         return []
 
+    # Get local WAT date
     today_local = datetime.now(WAT_TIMEZONE).strftime("%Y-%m-%d")
     print(f"🔍 Fetching fixtures for date: {today_local}")
 
@@ -55,8 +57,9 @@ def fetch_fixtures():
         response.raise_for_status()
         data = response.json().get("response", [])
 
+        # Fallback to upcoming fixtures if today has no matches scheduled
         if not data:
-            print("⚠️ No matches found for today. Fetching next upcoming fixtures...")
+            print("⚠️ No matches found for today. Fetching upcoming fixtures...")
             fallback_params = {"next": "40", "timezone": LOCAL_TIMEZONE_NAME}
             fallback_resp = requests.get(API_URL, headers=HEADERS, params=fallback_params)
             fallback_resp.raise_for_status()
@@ -129,6 +132,7 @@ def process_fixtures(fixtures):
         }
         predictions_data.append(match_info)
 
+    # Sort descending by confidence score
     predictions_data.sort(key=lambda x: x["confidence_num"], reverse=True)
 
     for index, match in enumerate(predictions_data, start=1):
@@ -152,8 +156,8 @@ def main():
     with open("predictions.json", "w", encoding="utf-8") as f:
         json.dump(predictions, f, indent=4)
 
-    print("🎉 File saved: predictions.json")
+    print("🎉 File generated: predictions.json")
 
 if __name__ == "__main__":
     main()
-          
+        
