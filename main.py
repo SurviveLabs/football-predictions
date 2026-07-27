@@ -7,6 +7,10 @@ from datetime import datetime, timezone, timedelta
 API_KEY = os.environ.get("FOOTBALL_API_KEY")
 API_URL = "https://v3.football.api-sports.io/fixtures"
 
+# Telegram Secrets
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
+
 HEADERS = {
     "x-apisports-key": API_KEY
 }
@@ -132,6 +136,98 @@ def process_fixtures(fixtures):
 
     return predictions_data
 
+def build_standard_ticket(predictions, target_odds):
+    sorted_matches = sorted(predictions, key=lambda x: x["confidence_num"], reverse=True)
+    selected_matches = []
+    total_odds = 1.0
+
+    for match in sorted_matches:
+        odds_val = match.get("odds", 1.50)
+        selected_matches.append(match)
+        total_odds *= odds_val
+
+        if total_odds >= target_odds:
+            break
+
+    return selected_matches, total_odds
+
+def build_high_odds_ticket(predictions, target_odds=10.0):
+    # Prefer picks with higher individual odds
+    high_value_matches = [m for m in predictions if m.get("odds", 1.50) >= 1.60]
+    if not high_value_matches:
+        high_value_matches = predictions
+
+    sorted_matches = sorted(high_value_matches, key=lambda x: x.get("odds", 1.50), reverse=True)
+    selected_matches = []
+    total_odds = 1.0
+
+    for match in sorted_matches:
+        odds_val = match.get("odds", 1.50)
+        selected_matches.append(match)
+        total_odds *= odds_val
+
+        if total_odds >= target_odds:
+            break
+
+    return selected_matches, total_odds
+
+def send_telegram_broadcast(predictions):
+    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
+        print("ℹ️ Telegram credentials missing. Skipping broadcast.")
+        return
+
+    if not predictions:
+        print("⚠️ No predictions available to broadcast.")
+        return
+
+    # Build standard and high-odds tickets
+    slip_3, total_3 = build_standard_ticket(predictions, 3.0)
+    slip_5, total_5 = build_standard_ticket(predictions, 5.0)
+    slip_10, total_10 = build_high_odds_ticket(predictions, 10.0)
+
+    now_str = datetime.now(WAT_TIMEZONE).strftime("%b %d, %Y • %I:%M %p WAT")
+
+    # Format HTML Message
+    message = "<b>⚽ DAILY PREDICTION TICKETS ⚽</b>\n"
+    message += f"<i>Updated: {now_str}</i>\n\n"
+
+    # 3-Odds Slip
+    message += "<b>🎯 3-ODDS SAFE SLIP</b>\n"
+    for i, m in enumerate(slip_3, 1):
+        message += f"{i}. <b>{m['home_team']} vs {m['away_team']}</b>\n"
+        message += f"   👉 Pick: <code>{m['prediction']}</code> (@{m['odds']:.2f})\n"
+    message += f"💵 <b>Total Odds: ~{total_3:.2f}</b>\n\n"
+
+    # 5-Odds Slip
+    message += "<b>🔥 5-ODDS MEDIUM SLIP</b>\n"
+    for i, m in enumerate(slip_5, 1):
+        message += f"{i}. <b>{m['home_team']} vs {m['away_team']}</b>\n"
+        message += f"   👉 Pick: <code>{m['prediction']}</code> (@{m['odds']:.2f})\n"
+    message += f"💵 <b>Total Odds: ~{total_5:.2f}</b>\n\n"
+
+    # 10+ High Odds Slip
+    message += "<b>🚀 10+ HIGH-ODDS TICKET</b>\n"
+    for i, m in enumerate(slip_10, 1):
+        message += f"{i}. <b>{m['home_team']} vs {m['away_team']}</b>\n"
+        message += f"   👉 Pick: <code>{m['prediction']}</code> (@{m['odds']:.2f})\n"
+    message += f"💥 <b>Total Combined Odds: {total_10:.2f}</b>\n\n"
+
+    message += "📲 <i>Check all today's matches on the Web App!</i>"
+
+    telegram_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    payload = {
+        "chat_id": TELEGRAM_CHAT_ID,
+        "text": message,
+        "parse_mode": "HTML"
+    }
+
+    try:
+        response = requests.post(telegram_url, json=payload)
+        response.raise_for_status()
+        print("🚀 Telegram ticket broadcast posted successfully!")
+    except Exception as e:
+        print(f"❌ Failed to broadcast to Telegram: {e}")
+
 def main():
     print("⚽ Fetching fixtures from API-Football...")
     raw_fixtures = fetch_fixtures()
@@ -143,7 +239,6 @@ def main():
         print("⚠️ No matches scheduled today or tomorrow.")
         predictions = []
 
-    # Timestamp forces Git commit on every scheduled run
     now_wat = datetime.now(WAT_TIMEZONE).strftime("%Y-%m-%d %I:%M %p WAT")
     
     output_payload = {
@@ -155,6 +250,9 @@ def main():
         json.dump(output_payload, f, indent=4)
 
     print(f"🎉 File generated at {now_wat}: predictions.json")
+
+    # Trigger Telegram Broadcast
+    send_telegram_broadcast(predictions)
 
 if __name__ == "__main__":
     main()
