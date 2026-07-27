@@ -2,8 +2,8 @@ name: Update Predictions
 
 on:
   schedule:
-    - cron: '0 6,14 * * *'  # Runs twice daily at 6:00 AM UTC (7:00 AM WAT) & 2:00 PM UTC (3:00 PM WAT)
-  workflow_dispatch:        # Keeps the manual "Run workflow" button active
+    - cron: '0 6,14 * * *'  # Runs daily at 7:00 AM & 3:00 PM WAT
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -26,9 +26,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests
 
-      - name: Fetch Predictions from API
+      - name: Fetch Predictions & Broadcast to Telegram
         env:
           FOOTBALL_API_KEY: ${{ secrets.FOOTBALL_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python main.py
 
       - name: Commit and Push Updated predictions.json
