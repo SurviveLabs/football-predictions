@@ -82,9 +82,6 @@ def is_valid_fixture(item):
     return False
 
 def generate_prediction_market(fixture_id, home_team, away_team):
-    """
-    Smarter market generator outputting exact predictions, confidence, and exact odds.
-    """
     market_matrix = [
         {"pick": f"{home_team} Win", "confidence": 84, "odds": 1.58},
         {"pick": "Over 1.5 Goals", "confidence": 90, "odds": 1.32},
@@ -127,12 +124,10 @@ def process_fixtures(fixtures):
         }
         predictions_data.append(match_info)
 
-    # Sort by confidence to index top picks
     predictions_data.sort(key=lambda x: x["confidence_num"], reverse=True)
     for index, match in enumerate(predictions_data, start=1):
         match["rank"] = index
 
-    # Sort chronologically by Kickoff Time
     predictions_data.sort(key=lambda x: x.get("date", ""))
 
     return predictions_data
@@ -148,10 +143,18 @@ def main():
         print("⚠️ No matches scheduled today or tomorrow.")
         predictions = []
 
-    with open("predictions.json", "w", encoding="utf-8") as f:
-        json.dump(predictions, f, indent=4)
+    # Timestamp forces Git commit on every scheduled run
+    now_wat = datetime.now(WAT_TIMEZONE).strftime("%Y-%m-%d %I:%M %p WAT")
+    
+    output_payload = {
+        "last_updated": now_wat,
+        "predictions": predictions
+    }
 
-    print("🎉 File generated: predictions.json")
+    with open("predictions.json", "w", encoding="utf-8") as f:
+        json.dump(output_payload, f, indent=4)
+
+    print(f"🎉 File generated at {now_wat}: predictions.json")
 
 if __name__ == "__main__":
     main()
