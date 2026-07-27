@@ -10,7 +10,7 @@ API_URL = "https://v3.football.api-sports.io/fixtures"
 # Telegram Secrets
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
-WEB_APP_URL = "https://survivelabs.github.io/football-predictions/"
+WEB_APP_URL = "https://survivelabs.github.io/football-predictions/"  # Replace with your actual GitHub Pages URL
 
 HEADERS = {
     "x-apisports-key": API_KEY
@@ -37,18 +37,6 @@ MAJOR_LEAGUE_IDS = {
     288,                # NPFL (Nigeria)
     1, 4, 9, 6, 15,     # World Cup, Euros, Copa America, AFCON, Nations League
     667,                # Club Friendlies
-}
-
-# League Flags for Clean Telegram Formatting
-LEAGUE_FLAGS = {
-    "Premier League": "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "Championship": "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "FA Cup": "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
-    "La Liga": "🇪🇸", "Segunda División": "🇪🇸", "Copa del Rey": "🇪🇸",
-    "Serie A": "🇮🇹", "Serie B": "🇮🇹", "Coppa Italia": "🇮🇹",
-    "Bundesliga": "🇩🇪", "2. Bundesliga": "🇩🇪",
-    "Ligue 1": "🇫🇷", "Ligue 2": "🇫🇷",
-    "Eredivisie": "🇳🇱", "Primeira Liga": "🇵🇹",
-    "UEFA Champions League": "🏆", "UEFA Europa League": "🏆", "UEFA Conference League": "🏆",
-    "MLS": "🇺🇸", "Saudi Pro League": "🇸🇦", "NPFL": "🇳🇬"
 }
 
 EXCLUDE_KEYWORDS = [
@@ -100,31 +88,33 @@ def is_valid_fixture(item):
 
 def generate_diversified_prediction(fixture_id, home_team, away_team):
     """
-    Expands the prediction options to include Away wins, Away double chance,
-    BTTS, Over/Under goals, and Home options for maximum ticket variety.
+    Generates a balanced market matrix with diverse market picks across fixtures.
     """
     market_matrix = [
-        {"pick": f"{home_team} Win", "confidence": 84, "odds": 1.65, "type": "home"},
-        {"pick": "Over 1.5 Goals", "confidence": 91, "odds": 1.30, "type": "goals"},
-        {"pick": f"{away_team} Win", "confidence": 76, "odds": 2.35, "type": "away"},
-        {"pick": f"Double Chance ({home_team} or Draw)", "confidence": 92, "odds": 1.25, "type": "home_dc"},
-        {"pick": "Both Teams To Score (BTTS)", "confidence": 82, "odds": 1.78, "type": "btts"},
-        {"pick": f"Double Chance ({away_team} or Draw)", "confidence": 86, "odds": 1.48, "type": "away_dc"},
-        {"pick": "Over 2.5 Goals", "confidence": 80, "odds": 1.85, "type": "goals"},
-        {"pick": f"{away_team} Draw No Bet", "confidence": 78, "odds": 1.95, "type": "away"}
+        {"pick": f"{home_team} Win", "confidence": 85, "odds": 1.70, "cat": "Straight Pick"},
+        {"pick": "Over 1.5 Goals", "confidence": 89, "odds": 1.32, "cat": "Goals"},
+        {"pick": f"{away_team} Win", "confidence": 79, "odds": 2.15, "cat": "Straight Pick"},
+        {"pick": f"Double Chance ({home_team} or Draw)", "confidence": 90, "odds": 1.28, "cat": "Double Chance"},
+        {"pick": "Both Teams To Score (BTTS)", "confidence": 83, "odds": 1.75, "cat": "BTTS"},
+        {"pick": f"Double Chance ({away_team} or Draw)", "confidence": 85, "odds": 1.45, "cat": "Double Chance"},
+        {"pick": "Over 2.5 Goals", "confidence": 81, "odds": 1.82, "cat": "Goals"},
+        {"pick": f"{away_team} Draw No Bet", "confidence": 82, "odds": 1.90, "cat": "Straight Pick"},
+        {"pick": f"{home_team} Draw No Bet", "confidence": 86, "odds": 1.48, "cat": "Straight Pick"}
     ]
 
     selected = market_matrix[fixture_id % len(market_matrix)]
-    return selected["pick"], selected["confidence"], selected["odds"]
+    return selected["pick"], selected["confidence"], selected["odds"], selected["cat"]
 
-def format_kickoff_time(utc_date_str):
-    """Converts UTC ISO date string into 12-hour WAT time format (e.g. 8:00 PM)."""
+def format_match_datetime(utc_date_str):
+    """Converts UTC ISO date string into formatted Date (Jul 27) and Time (8:00 PM)."""
     try:
         dt = datetime.fromisoformat(utc_date_str.replace("Z", "+00:00"))
         wat_dt = dt.astimezone(WAT_TIMEZONE)
-        return wat_dt.strftime("%I:%M %p")
+        match_date = wat_dt.strftime("%b %d")
+        match_time = wat_dt.strftime("%I:%M %p")
+        return match_date, match_time
     except Exception:
-        return "TBD"
+        return "Today", "TBD"
 
 def process_fixtures(fixtures):
     filtered_fixtures = [f for f in fixtures if is_valid_fixture(f)]
@@ -136,27 +126,28 @@ def process_fixtures(fixtures):
         league = item.get("league", {})
         teams = item.get("teams", {})
 
+        # Live Teams Verification
         home_team = teams.get("home", {}).get("name", "Home Team")
         away_team = teams.get("away", {}).get("name", "Away Team")
         league_name = league.get("name", "Unknown League")
-        flag = LEAGUE_FLAGS.get(league_name, "⚽")
 
-        prediction_text, confidence_score, exact_odds = generate_diversified_prediction(fixture_id, home_team, away_team)
-        kickoff_time = format_kickoff_time(fixture.get("date", ""))
+        prediction_text, confidence_score, exact_odds, market_cat = generate_diversified_prediction(fixture_id, home_team, away_team)
+        match_date, match_time = format_match_datetime(fixture.get("date", ""))
 
         match_info = {
             "fixture_id": fixture_id,
             "league": league_name,
-            "flag": flag,
             "match": f"{home_team} vs {away_team}",
             "home_team": home_team,
             "away_team": away_team,
-            "date": fixture.get("date", ""),
-            "kickoff_wat": kickoff_time,
+            "match_date": match_date,
+            "kickoff_wat": match_time,
             "prediction": prediction_text,
+            "market_cat": market_cat,
             "confidence_num": confidence_score,
             "confidence": f"{confidence_score}%",
-            "odds": exact_odds
+            "odds": exact_odds,
+            "date": fixture.get("date", "")
         }
         predictions_data.append(match_info)
 
@@ -168,37 +159,42 @@ def process_fixtures(fixtures):
 
     return predictions_data
 
-def build_standard_ticket(predictions, target_odds):
-    sorted_matches = sorted(predictions, key=lambda x: x["confidence_num"], reverse=True)
+def build_diverse_ticket(predictions, target_odds, sort_by="confidence"):
+    """
+    Builds a ticket by mixing market categories (BTTS, Goals, Straight Picks, Double Chance)
+    so tickets don't repeat the exact same option over and over.
+    """
+    if sort_by == "odds":
+        sorted_matches = sorted(predictions, key=lambda x: x.get("odds", 1.50), reverse=True)
+    else:
+        sorted_matches = sorted(predictions, key=lambda x: x["confidence_num"], reverse=True)
+
     selected_matches = []
     total_odds = 1.0
+    category_counts = {}
 
     for match in sorted_matches:
-        odds_val = match.get("odds", 1.50)
+        category = match.get("market_cat", "General")
+
+        # Allow max 2 selections per market category to force variety
+        if category_counts.get(category, 0) >= 2:
+            continue
+
         selected_matches.append(match)
-        total_odds *= odds_val
+        category_counts[category] = category_counts.get(category, 0) + 1
+        total_odds *= match.get("odds", 1.50)
 
         if total_odds >= target_odds:
             break
 
-    return selected_matches, total_odds
-
-def build_high_odds_ticket(predictions, target_odds=10.0):
-    high_value_matches = [m for m in predictions if m.get("odds", 1.50) >= 1.65]
-    if not high_value_matches:
-        high_value_matches = predictions
-
-    sorted_matches = sorted(high_value_matches, key=lambda x: x.get("odds", 1.50), reverse=True)
-    selected_matches = []
-    total_odds = 1.0
-
-    for match in sorted_matches:
-        odds_val = match.get("odds", 1.50)
-        selected_matches.append(match)
-        total_odds *= odds_val
-
-        if total_odds >= target_odds:
-            break
+    # Fallback if target odds wasn't reached under strict category limits
+    if total_odds < target_odds:
+        for match in sorted_matches:
+            if match not in selected_matches:
+                selected_matches.append(match)
+                total_odds *= match.get("odds", 1.50)
+                if total_odds >= target_odds:
+                    break
 
     return selected_matches, total_odds
 
@@ -211,9 +207,10 @@ def send_telegram_broadcast(predictions):
         print("⚠️ No predictions available to broadcast.")
         return
 
-    slip_3, total_3 = build_standard_ticket(predictions, 3.0)
-    slip_5, total_5 = build_standard_ticket(predictions, 5.0)
-    slip_10, total_10 = build_high_odds_ticket(predictions, 10.0)
+    # Build tickets with market diversity
+    slip_3, total_3 = build_diverse_ticket(predictions, 3.0, sort_by="confidence")
+    slip_5, total_5 = build_diverse_ticket(predictions, 5.0, sort_by="confidence")
+    slip_10, total_10 = build_diverse_ticket(predictions, 10.0, sort_by="odds")
 
     now_str = datetime.now(WAT_TIMEZONE).strftime("%b %d, %Y • %I:%M %p WAT")
 
@@ -224,25 +221,28 @@ def send_telegram_broadcast(predictions):
     # 3-Odds Slip
     message += "<b>🎯 3-ODDS SAFE SLIP</b>\n"
     for i, m in enumerate(slip_3, 1):
-        message += f"{i}. {m['flag']} <b>{m['home_team']} vs {m['away_team']}</b> (⏰ {m['kickoff_wat']})\n"
+        message += f"{i}. <b>{m['home_team']} vs {m['away_team']}</b>\n"
+        message += f"   🗓️ {m['match_date']} • ⏰ {m['kickoff_wat']}\n"
         message += f"   👉 Pick: <code>{m['prediction']}</code> (@{m['odds']:.2f})\n"
     message += f"💵 <b>Total Odds: ~{total_3:.2f}</b>\n\n"
 
     # 5-Odds Slip
     message += "<b>🔥 5-ODDS MEDIUM SLIP</b>\n"
     for i, m in enumerate(slip_5, 1):
-        message += f"{i}. {m['flag']} <b>{m['home_team']} vs {m['away_team']}</b> (⏰ {m['kickoff_wat']})\n"
+        message += f"{i}. <b>{m['home_team']} vs {m['away_team']}</b>\n"
+        message += f"   🗓️ {m['match_date']} • ⏰ {m['kickoff_wat']}\n"
         message += f"   👉 Pick: <code>{m['prediction']}</code> (@{m['odds']:.2f})\n"
     message += f"💵 <b>Total Odds: ~{total_5:.2f}</b>\n\n"
 
     # 10+ High Odds Slip
     message += "<b>🚀 10+ HIGH-ODDS TICKET</b>\n"
     for i, m in enumerate(slip_10, 1):
-        message += f"{i}. {m['flag']} <b>{m['home_team']} vs {m['away_team']}</b> (⏰ {m['kickoff_wat']})\n"
+        message += f"{i}. <b>{m['home_team']} vs {m['away_team']}</b>\n"
+        message += f"   🗓️ {m['match_date']} • ⏰ {m['kickoff_wat']}\n"
         message += f"   👉 Pick: <code>{m['prediction']}</code> (@{m['odds']:.2f})\n"
     message += f"💥 <b>Total Combined Odds: {total_10:.2f}</b>"
 
-    # Option 1: Inline Action Button
+    # Inline Web App Button
     reply_markup = {
         "inline_keyboard": [
             [
@@ -262,19 +262,17 @@ def send_telegram_broadcast(predictions):
     try:
         response = requests.post(telegram_url, json=payload)
         response.raise_for_status()
-        print("🚀 Telegram ticket broadcast posted successfully with Web App Button!")
+        print("🚀 Telegram ticket broadcast posted successfully!")
     except Exception as e:
         print(f"❌ Failed to broadcast to Telegram: {e}")
 
-    # Option 4: Post Daily Interactive Channel Poll
+    # Post Interactive Channel Poll
     send_channel_poll(predictions)
 
 def send_channel_poll(predictions):
-    """Option 4: Creates an interactive poll for the marquee match of the day."""
     if not predictions:
         return
 
-    # Select top ranked match
     top_match = sorted(predictions, key=lambda x: x["confidence_num"], reverse=True)[0]
     
     question = f"🗳️ MATCH OF THE DAY POLL: {top_match['home_team']} vs {top_match['away_team']}! Who wins?"
@@ -322,4 +320,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-                                                        
+    
