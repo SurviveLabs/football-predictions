@@ -10,7 +10,7 @@ API_URL = "https://v3.football.api-sports.io/fixtures"
 # Telegram Secrets
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
-WEB_APP_URL = os.environ.get("WEB_APP_URL", "https://github.com") # Optional custom link
+WEB_APP_URL = "https://survivelabs.github.io/football-predictions/"
 
 HEADERS = {
     "x-apisports-key": API_KEY
