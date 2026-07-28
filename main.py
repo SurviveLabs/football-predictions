@@ -20,29 +20,44 @@ HEADERS = {
 WAT_TIMEZONE = timezone(timedelta(hours=1))
 LOCAL_TIMEZONE_NAME = "Africa/Lagos"
 
-# Whitelist of Major Competitions
-MAJOR_LEAGUE_IDS = {
-    2, 3, 848,          # Champions League, Europa League, Conference League
-    39, 40, 45, 48,     # Premier League, Championship, FA Cup, League Cup (England)
-    140, 141, 143,      # La Liga, Segunda División, Copa del Rey (Spain)
-    135, 136, 137,      # Serie A, Serie B, Coppa Italia (Italy)
-    78, 79, 81,         # Bundesliga, 2. Bundesliga, DFB-Pokal (Germany)
-    61, 62, 66,         # Ligue 1, Ligue 2, Coupe de France (France)
-    88,                 # Eredivisie (Netherlands)
-    94,                 # Primeira Liga (Portugal)
-    253,                # MLS (USA)
-    307,                # Saudi Pro League
-    71,                 # Brasileirão Serie A
-    128,                # Liga Profesional Argentina
-    288,                # NPFL (Nigeria)
-    1, 4, 9, 6, 15,     # World Cup, Euros, Copa America, AFCON, Nations League
-    667,                # Club Friendlies
+# Whitelist focused on Lower & Secondary Tier Leagues
+LOWER_LEAGUE_IDS = {
+    # England
+    40, 41, 42, 43,     # Championship, League One, League Two, National League
+    # Spain
+    141, 142,           # Segunda División, Primera RFEF
+    # Italy
+    136, 138,           # Serie B, Serie C
+    # Germany
+    79, 80,             # 2. Bundesliga, 3. Liga
+    # France
+    62, 63,             # Ligue 2, National
+    # Netherlands & Portugal
+    89, 95,             # Eerste Divisie, Liga Portugal 2
+    # Americas
+    72, 73,             # Brasileirão Serie B, Serie C
+    129,                # Argentina Primera Nacional
+    255,                # USA USL Championship
+    # Scotland
+    180, 181, 182,      # Championship, League One, League Two
+    # Scandinavia & Europe (Active summer leagues)
+    114,                # Sweden Superettan
+    104,                # Norway 1. Division
+    245,                # Finland Ykkösliiga / Ykkönen
+    358,                # Ireland First Division
+    303,                # Iceland 1. Deild
+    120,                # Denmark 1. Division
+    219,                # Austria 2. Liga
+    208,                # Switzerland Challenge League
+    145,                # Belgium Challenger Pro League
+    # Asia
+    99, 100,            # Japan J2 League, J3 League
+    293                 # South Korea K League 2
 }
 
 EXCLUDE_KEYWORDS = [
     "youth", "u17", "u18", "u19", "u20", "u21", "u23", 
-    "reserve", "women", "wnl", "simulated", 
-    "cyber", "electronic", "amateur", "3rd", "4th"
+    "women", "wnl", "simulated", "cyber", "electronic"
 ]
 
 def fetch_fixtures():
@@ -81,15 +96,12 @@ def is_valid_fixture(item):
         if keyword in league_name:
             return False
 
-    if league_id in MAJOR_LEAGUE_IDS:
+    if league_id in LOWER_LEAGUE_IDS:
         return True
 
     return False
 
 def generate_diversified_prediction(fixture_id, home_team, away_team):
-    """
-    Generates a balanced market matrix with diverse market picks across fixtures.
-    """
     market_matrix = [
         {"pick": f"{home_team} Win", "confidence": 85, "odds": 1.70, "cat": "Straight Pick"},
         {"pick": "Over 1.5 Goals", "confidence": 89, "odds": 1.32, "cat": "Goals"},
@@ -106,7 +118,6 @@ def generate_diversified_prediction(fixture_id, home_team, away_team):
     return selected["pick"], selected["confidence"], selected["odds"], selected["cat"]
 
 def format_match_datetime(utc_date_str):
-    """Converts UTC ISO date string into formatted Date (Jul 27) and Time (8:00 PM)."""
     try:
         dt = datetime.fromisoformat(utc_date_str.replace("Z", "+00:00"))
         wat_dt = dt.astimezone(WAT_TIMEZONE)
@@ -126,7 +137,6 @@ def process_fixtures(fixtures):
         league = item.get("league", {})
         teams = item.get("teams", {})
 
-        # Live Teams Verification
         home_team = teams.get("home", {}).get("name", "Home Team")
         away_team = teams.get("away", {}).get("name", "Away Team")
         league_name = league.get("name", "Unknown League")
@@ -160,10 +170,6 @@ def process_fixtures(fixtures):
     return predictions_data
 
 def build_diverse_ticket(predictions, target_odds, sort_by="confidence"):
-    """
-    Builds a ticket by mixing market categories (BTTS, Goals, Straight Picks, Double Chance)
-    so tickets don't repeat the exact same option over and over.
-    """
     if sort_by == "odds":
         sorted_matches = sorted(predictions, key=lambda x: x.get("odds", 1.50), reverse=True)
     else:
@@ -176,7 +182,6 @@ def build_diverse_ticket(predictions, target_odds, sort_by="confidence"):
     for match in sorted_matches:
         category = match.get("market_cat", "General")
 
-        # Allow max 2 selections per market category to force variety
         if category_counts.get(category, 0) >= 2:
             continue
 
@@ -187,7 +192,6 @@ def build_diverse_ticket(predictions, target_odds, sort_by="confidence"):
         if total_odds >= target_odds:
             break
 
-    # Fallback if target odds wasn't reached under strict category limits
     if total_odds < target_odds:
         for match in sorted_matches:
             if match not in selected_matches:
@@ -207,42 +211,36 @@ def send_telegram_broadcast(predictions):
         print("⚠️ No predictions available to broadcast.")
         return
 
-    # Build tickets with market diversity
     slip_3, total_3 = build_diverse_ticket(predictions, 3.0, sort_by="confidence")
     slip_5, total_5 = build_diverse_ticket(predictions, 5.0, sort_by="confidence")
     slip_10, total_10 = build_diverse_ticket(predictions, 10.0, sort_by="odds")
 
     now_str = datetime.now(WAT_TIMEZONE).strftime("%b %d, %Y • %I:%M %p WAT")
 
-    # Header
     message = "<b>⚽ DAILY PREDICTION TICKETS ⚽</b>\n"
     message += f"<i>Updated: {now_str}</i>\n\n"
 
-    # 3-Odds Slip
     message += "<b>🎯 3-ODDS SAFE SLIP</b>\n"
     for i, m in enumerate(slip_3, 1):
-        message += f"{i}. <b>{m['home_team']} vs {m['away_team']}</b>\n"
+        message += f"{i}. <b>{m['home_team']} vs {m['away_team']}</b> ({m['league']})\n"
         message += f"   🗓️ {m['match_date']} • ⏰ {m['kickoff_wat']}\n"
         message += f"   👉 Pick: <code>{m['prediction']}</code> (@{m['odds']:.2f})\n"
     message += f"💵 <b>Total Odds: ~{total_3:.2f}</b>\n\n"
 
-    # 5-Odds Slip
     message += "<b>🔥 5-ODDS MEDIUM SLIP</b>\n"
     for i, m in enumerate(slip_5, 1):
-        message += f"{i}. <b>{m['home_team']} vs {m['away_team']}</b>\n"
+        message += f"{i}. <b>{m['home_team']} vs {m['away_team']}</b> ({m['league']})\n"
         message += f"   🗓️ {m['match_date']} • ⏰ {m['kickoff_wat']}\n"
         message += f"   👉 Pick: <code>{m['prediction']}</code> (@{m['odds']:.2f})\n"
     message += f"💵 <b>Total Odds: ~{total_5:.2f}</b>\n\n"
 
-    # 10+ High Odds Slip
     message += "<b>🚀 10+ HIGH-ODDS TICKET</b>\n"
     for i, m in enumerate(slip_10, 1):
-        message += f"{i}. <b>{m['home_team']} vs {m['away_team']}</b>\n"
+        message += f"{i}. <b>{m['home_team']} vs {m['away_team']}</b> ({m['league']})\n"
         message += f"   🗓️ {m['match_date']} • ⏰ {m['kickoff_wat']}\n"
         message += f"   👉 Pick: <code>{m['prediction']}</code> (@{m['odds']:.2f})\n"
     message += f"💥 <b>Total Combined Odds: {total_10:.2f}</b>"
 
-    # Inline Web App Button
     reply_markup = {
         "inline_keyboard": [
             [
@@ -266,7 +264,6 @@ def send_telegram_broadcast(predictions):
     except Exception as e:
         print(f"❌ Failed to broadcast to Telegram: {e}")
 
-    # Post Interactive Channel Poll
     send_channel_poll(predictions)
 
 def send_channel_poll(predictions):
@@ -298,9 +295,9 @@ def main():
 
     if raw_fixtures:
         predictions = process_fixtures(raw_fixtures)
-        print(f"✅ Processed {len(predictions)} matches with exact odds.")
+        print(f"✅ Processed {len(predictions)} lower league matches.")
     else:
-        print("⚠️ No matches scheduled today or tomorrow.")
+        print("⚠️ No lower league matches scheduled today or tomorrow.")
         predictions = []
 
     now_wat = datetime.now(WAT_TIMEZONE).strftime("%Y-%m-%d %I:%M %p WAT")
@@ -315,7 +312,6 @@ def main():
 
     print(f"🎉 File generated at {now_wat}: predictions.json")
 
-    # Trigger Telegram Broadcast
     send_telegram_broadcast(predictions)
 
 if __name__ == "__main__":
