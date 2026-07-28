@@ -2,7 +2,8 @@ name: Update Predictions
 
 on:
   schedule:
-    - cron: '0 6,14 * * *'  # Runs daily at 7:00 AM & 3:00 PM WAT
+    - cron: '0 6 * * *'   # Runs daily at 7:00 AM WAT (06:00 UTC)
+    - cron: '0 14 * * *'  # Runs daily at 3:00 PM WAT (14:00 UTC)
   workflow_dispatch:
 
 permissions:
@@ -26,18 +27,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests
 
-            - name: Fetch Predictions & Broadcast to Telegram
+      - name: Fetch Predictions & Broadcast to Telegram
         env:
           FOOTBALL_API_KEY: ${{ secrets.FOOTBALL_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python main.py
 
-      # Ensures predictions.json updates live on your web app
       - name: Commit and Push Updated Predictions
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "Auto-update predictions.json [skip ci]"
           file_pattern: "predictions.json"
-          
           
