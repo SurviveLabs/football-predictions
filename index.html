@@ -8,11 +8,14 @@
         :root {
             --bg-color: #0f172a;
             --card-bg: #1e293b;
+            --card-selected: #1e3a8a;
             --accent-color: #10b981;
+            --accent-hover: #059669;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
             --border-color: #334155;
             --badge-bg: #3b82f6;
+            --drawer-bg: #0f172ae6;
         }
 
         * {
@@ -25,7 +28,7 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
-            padding: 20px 12px;
+            padding: 20px 12px 100px 12px; /* Bottom padding for floating slip builder */
             display: flex;
             justify-content: center;
         }
@@ -37,7 +40,7 @@
 
         header {
             text-align: center;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
             padding-bottom: 16px;
             border-bottom: 1px solid var(--border-color);
         }
@@ -68,6 +71,45 @@
             margin-top: 8px;
         }
 
+        /* Category Filter Bar */
+        .filter-bar {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+            scrollbar-width: none; /* Hide scrollbar Firefox */
+        }
+
+        .filter-bar::-webkit-scrollbar {
+            display: none; /* Hide scrollbar Chrome/Safari */
+        }
+
+        .filter-btn {
+            background-color: var(--card-bg);
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .filter-btn:hover {
+            border-color: var(--accent-color);
+            color: var(--text-main);
+        }
+
+        .filter-btn.active {
+            background-color: var(--accent-color);
+            color: #ffffff;
+            border-color: var(--accent-color);
+        }
+
+        /* Predictions Cards */
         .predictions-list {
             display: flex;
             flex-direction: column;
@@ -76,15 +118,22 @@
 
         .card {
             background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
+            border: 2px solid var(--border-color);
             border-radius: 12px;
             padding: 16px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-            transition: transform 0.2s ease, border-color 0.2s ease;
+            transition: all 0.2s ease;
+            position: relative;
+            cursor: pointer;
         }
 
         .card:hover {
             border-color: var(--accent-color);
+        }
+
+        .card.selected {
+            border-color: var(--accent-color);
+            background-color: rgba(16, 185, 129, 0.08);
         }
 
         .card-header {
@@ -151,9 +200,122 @@
             font-size: 0.85rem;
         }
 
+        .card-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-copy-single {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-copy-single:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
         .confidence {
             font-size: 0.75rem;
             color: var(--text-muted);
+        }
+
+        /* Checkbox Indicator */
+        .select-checkbox {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            border: 2px solid var(--border-color);
+            display: inline-block;
+            margin-right: 8px;
+            vertical-align: middle;
+            transition: all 0.2s;
+        }
+
+        .card.selected .select-checkbox {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+
+        /* Floating Slip Builder Drawer */
+        .slip-drawer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--drawer-bg);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid var(--border-color);
+            padding: 14px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease;
+        }
+
+        .slip-drawer.hidden {
+            transform: translateY(100%);
+        }
+
+        .slip-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .slip-count {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .slip-odds {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--accent-color);
+        }
+
+        .btn-copy-slip {
+            background-color: var(--accent-color);
+            color: #ffffff;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-copy-slip:hover {
+            background-color: var(--accent-hover);
+        }
+
+        /* Toast Alert */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background-color: var(--accent-color);
+            color: #ffffff;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 2000;
+            transition: transform 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
         }
 
         .state-msg {
@@ -180,6 +342,13 @@
             <div class="status-bar">⚡ Auto-Updated Live Data</div>
         </header>
 
+        <nav class="filter-bar">
+            <button class="filter-btn active" onclick="filterPredictions('All')">All Matches</button>
+            <button class="filter-btn" onclick="filterPredictions('Straight Pick')">Straight Pick</button>
+            <button class="filter-btn" onclick="filterPredictions('Goals')">Goals (Over/BTTS)</button>
+            <button class="filter-btn" onclick="filterPredictions('Double Chance')">Double Chance</button>
+        </nav>
+
         <main id="predictions-container">
             <div class="state-msg">🔄 Loading latest predictions...</div>
         </main>
@@ -189,7 +358,21 @@
         </footer>
     </div>
 
+    <div id="slip-drawer" class="slip-drawer hidden">
+        <div class="slip-info">
+            <span id="slip-count" class="slip-count">0 Picks Selected</span>
+            <span id="slip-odds" class="slip-odds">Total Odds: @1.00</span>
+        </div>
+        <button class="btn-copy-slip" onclick="copyCustomSlip()">📋 Copy Custom Slip</button>
+    </div>
+
+    <div id="toast" class="toast">Copied to clipboard! 📋</div>
+
     <script>
+        let allPredictions = [];
+        let selectedPicks = [];
+        let currentFilter = 'All';
+
         document.addEventListener("DOMContentLoaded", () => {
             fetchPredictions();
         });
@@ -198,7 +381,7 @@
             const container = document.getElementById("predictions-container");
             const lastUpdatedEl = document.getElementById("last-updated");
 
-            // Cache-Busting Query Parameter (?t=timestamp) forces browser to pull fresh JSON every visit
+            // Cache-Busting parameter forces fresh fetch on every page load
             const cacheBusterUrl = `predictions.json?t=${new Date().getTime()}`;
 
             try {
@@ -213,9 +396,9 @@
                     lastUpdatedEl.textContent = `Last Updated: ${data.last_updated}`;
                 }
 
-                const predictions = data.predictions || [];
+                allPredictions = data.predictions || [];
 
-                if (predictions.length === 0) {
+                if (allPredictions.length === 0) {
                     container.innerHTML = `
                         <div class="state-msg">
                             ⚠️ No lower league predictions available for today or tomorrow.
@@ -223,7 +406,7 @@
                     return;
                 }
 
-                renderPredictions(predictions);
+                renderPredictions();
 
             } catch (error) {
                 console.error("❌ Error fetching predictions.json:", error);
@@ -234,17 +417,55 @@
             }
         }
 
-        function renderPredictions(predictions) {
-            const container = document.getElementById("predictions-container");
-            container.innerHTML = ""; // Clear loading message
+        function filterPredictions(category) {
+            currentFilter = category;
 
-            predictions.forEach((item) => {
+            // Update button active state
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent.includes(category) || (category === 'All' && btn.textContent === 'All Matches')) {
+                    btn.classList.add('active');
+                }
+            });
+
+            renderPredictions();
+        }
+
+        function renderPredictions() {
+            const container = document.getElementById("predictions-container");
+            container.innerHTML = "";
+
+            let filtered = allPredictions;
+
+            if (currentFilter === 'Goals') {
+                filtered = allPredictions.filter(item => item.market_cat === 'Goals' || item.market_cat === 'BTTS');
+            } else if (currentFilter !== 'All') {
+                filtered = allPredictions.filter(item => item.market_cat === currentFilter);
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="state-msg">No matches found for "${currentFilter}".</div>`;
+                return;
+            }
+
+            filtered.forEach((item) => {
+                const isSelected = selectedPicks.some(p => p.fixture_id === item.fixture_id);
                 const card = document.createElement("div");
-                card.className = "card";
+                card.className = `card ${isSelected ? 'selected' : ''}`;
+                card.setAttribute('data-id', item.fixture_id);
+
+                // Card Click toggles selection for custom slip builder
+                card.onclick = (e) => {
+                    if (e.target.closest('.btn-copy-single')) return; // Ignore if copy button clicked
+                    togglePick(item);
+                };
 
                 card.innerHTML = `
                     <div class="card-header">
-                        <span class="league-badge">${escapeHtml(item.league)}</span>
+                        <div>
+                            <span class="select-checkbox"></span>
+                            <span class="league-badge">${escapeHtml(item.league)}</span>
+                        </div>
                         <span class="match-time">🗓️ ${escapeHtml(item.match_date)} • ⏰ ${escapeHtml(item.kickoff_wat)}</span>
                     </div>
                     <div class="match-teams">
@@ -255,7 +476,10 @@
                             <div class="prediction-pick">👉 ${escapeHtml(item.prediction)}</div>
                             <div class="confidence">Confidence: ${escapeHtml(item.confidence)}</div>
                         </div>
-                        <span class="match-odds">@${parseFloat(item.odds).toFixed(2)}</span>
+                        <div class="card-actions">
+                            <button class="btn-copy-single" onclick="copySinglePick('${escapeHtml(item.home_team)} vs ${escapeHtml(item.away_team)}', '${escapeHtml(item.prediction)}', '${item.odds}')">📋 Copy</button>
+                            <span class="match-odds">@${parseFloat(item.odds).toFixed(2)}</span>
+                        </div>
                     </div>
                 `;
 
@@ -263,7 +487,73 @@
             });
         }
 
-        // Helper function to prevent XSS issues
+        function togglePick(item) {
+            const index = selectedPicks.findIndex(p => p.fixture_id === item.fixture_id);
+            if (index > -1) {
+                selectedPicks.splice(index, 1);
+            } else {
+                selectedPicks.push(item);
+            }
+
+            renderPredictions();
+            updateSlipDrawer();
+        }
+
+        function updateSlipDrawer() {
+            const drawer = document.getElementById("slip-drawer");
+            const countEl = document.getElementById("slip-count");
+            const oddsEl = document.getElementById("slip-odds");
+
+            if (selectedPicks.length === 0) {
+                drawer.classList.add("hidden");
+                return;
+            }
+
+            drawer.classList.remove("hidden");
+            countEl.textContent = `${selectedPicks.length} Pick${selectedPicks.length > 1 ? 's' : ''} Selected`;
+
+            const totalOdds = selectedPicks.reduce((acc, match) => acc * parseFloat(match.odds), 1.0);
+            oddsEl.textContent = `Total Odds: ~${totalOdds.toFixed(2)}`;
+        }
+
+        function copySinglePick(matchText, prediction, odds) {
+            const textToCopy = `⚽ ${matchText}\n👉 Pick: ${prediction} (@${parseFloat(odds).toFixed(2)})`;
+            copyToClipboard(textToCopy);
+        }
+
+        function copyCustomSlip() {
+            if (selectedPicks.length === 0) return;
+
+            const totalOdds = selectedPicks.reduce((acc, match) => acc * parseFloat(match.odds), 1.0);
+            
+            let slipText = `⚽ *MY CUSTOM PREDICTION SLIP*\n\n`;
+            selectedPicks.forEach((m, idx) => {
+                slipText += `${idx + 1}. *${m.home_team} vs ${m.away_team}*\n`;
+                slipText += `   🗓️ ${m.match_date} • ⏰ ${m.kickoff_wat}\n`;
+                slipText += `   👉 Pick: ${m.prediction} (@${parseFloat(m.odds).toFixed(2)})\n\n`;
+            });
+            slipText += `💵 *Total Combined Odds: ~${totalOdds.toFixed(2)}*`;
+
+            copyToClipboard(slipText);
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast("Copied to clipboard! 📋");
+            }).catch(err => {
+                console.error("Could not copy text: ", err);
+            });
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById("toast");
+            toast.textContent = message;
+            toast.classList.add("show");
+            setTimeout(() => {
+                toast.classList.remove("show");
+            }, 2000);
+        }
+
         function escapeHtml(str) {
             if (!str) return '';
             return String(str)
