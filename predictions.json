@@ -1,5 +1,5 @@
 {
-    "last_updated": "2026-07-29 09:32 AM WAT",
+    "last_updated": "2026-07-29 02:09 PM WAT",
     "predictions": [
         {
             "fixture_id": 1520794,
@@ -14,6 +14,7 @@
             "confidence_num": 89,
             "confidence": "89%",
             "odds": 1.32,
+            "is_value_pick": false,
             "date": "2026-07-29T01:35:00+01:00",
             "rank": 1
         },
@@ -30,8 +31,9 @@
             "confidence_num": 85,
             "confidence": "85%",
             "odds": 1.45,
+            "is_value_pick": false,
             "date": "2026-07-30T00:00:00+01:00",
-            "rank": 2
+            "rank": 3
         },
         {
             "fixture_id": 1493599,
@@ -43,11 +45,12 @@
             "kickoff_wat": "12:30 AM",
             "prediction": "Both Teams To Score (BTTS)",
             "market_cat": "BTTS",
-            "confidence_num": 83,
-            "confidence": "83%",
-            "odds": 1.75,
+            "confidence_num": 86,
+            "confidence": "86%",
+            "odds": 1.82,
+            "is_value_pick": true,
             "date": "2026-07-30T00:30:00+01:00",
-            "rank": 3
+            "rank": 2
         },
         {
             "fixture_id": 1517227,
@@ -62,6 +65,7 @@
             "confidence_num": 82,
             "confidence": "82%",
             "odds": 1.9,
+            "is_value_pick": false,
             "date": "2026-07-30T17:00:00+01:00",
             "rank": 4
         }
