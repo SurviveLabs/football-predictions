@@ -103,11 +103,11 @@ def is_valid_fixture(item):
 
 def generate_diversified_prediction(fixture_id, home_team, away_team):
     market_matrix = [
-        {"pick": f"{home_team} Win", "confidence": 85, "odds": 1.70, "cat": "Straight Pick"},
+        {"pick": f"{home_team} Win", "confidence": 85, "odds": 1.85, "cat": "Straight Pick"},
         {"pick": "Over 1.5 Goals", "confidence": 89, "odds": 1.32, "cat": "Goals"},
         {"pick": f"{away_team} Win", "confidence": 79, "odds": 2.15, "cat": "Straight Pick"},
         {"pick": f"Double Chance ({home_team} or Draw)", "confidence": 90, "odds": 1.28, "cat": "Double Chance"},
-        {"pick": "Both Teams To Score (BTTS)", "confidence": 83, "odds": 1.75, "cat": "BTTS"},
+        {"pick": "Both Teams To Score (BTTS)", "confidence": 86, "odds": 1.82, "cat": "BTTS"},
         {"pick": f"Double Chance ({away_team} or Draw)", "confidence": 85, "odds": 1.45, "cat": "Double Chance"},
         {"pick": "Over 2.5 Goals", "confidence": 81, "odds": 1.82, "cat": "Goals"},
         {"pick": f"{away_team} Draw No Bet", "confidence": 82, "odds": 1.90, "cat": "Straight Pick"},
@@ -144,6 +144,9 @@ def process_fixtures(fixtures):
         prediction_text, confidence_score, exact_odds, market_cat = generate_diversified_prediction(fixture_id, home_team, away_team)
         match_date, match_time = format_match_datetime(fixture.get("date", ""))
 
+        # Value Pick: Confidence >= 85% AND Odds >= 1.80
+        is_value_pick = (confidence_score >= 85 and exact_odds >= 1.80)
+
         match_info = {
             "fixture_id": fixture_id,
             "league": league_name,
@@ -157,6 +160,7 @@ def process_fixtures(fixtures):
             "confidence_num": confidence_score,
             "confidence": f"{confidence_score}%",
             "odds": exact_odds,
+            "is_value_pick": is_value_pick,
             "date": fixture.get("date", "")
         }
         predictions_data.append(match_info)
@@ -172,8 +176,6 @@ def process_fixtures(fixtures):
 def build_diverse_ticket(predictions, target_odds, sort_by="confidence"):
     today_str = datetime.now(WAT_TIMEZONE).strftime("%b %d")
 
-    # Priority 1: Today's matches (1) over Tomorrow's matches (0)
-    # Priority 2: Highest Confidence or Highest Odds
     if sort_by == "odds":
         sorted_matches = sorted(
             predictions, 
@@ -234,30 +236,31 @@ def send_telegram_broadcast(predictions):
 
     message += "<b>🎯 3-ODDS SAFE SLIP</b>\n"
     for i, m in enumerate(slip_3, 1):
-        message += f"{i}. <b>{m['home_team']} vs {m['away_team']}</b> ({m['league']})\n"
+        value_tag = " 🔥" if m.get("is_value_pick") else ""
+        message += f"{i}. <b>{m['home_team']} vs {m['away_team']}</b> ({m['league']}){value_tag}\n"
         message += f"   🗓️ {m['match_date']} • ⏰ {m['kickoff_wat']}\n"
         message += f"   👉 Pick: <code>{m['prediction']}</code> (@{m['odds']:.2f})\n"
     message += f"💵 <b>Total Odds: ~{total_3:.2f}</b>\n\n"
 
     message += "<b>🔥 5-ODDS MEDIUM SLIP</b>\n"
     for i, m in enumerate(slip_5, 1):
-        message += f"{i}. <b>{m['home_team']} vs {m['away_team']}</b> ({m['league']})\n"
+        value_tag = " 🔥" if m.get("is_value_pick") else ""
+        message += f"{i}. <b>{m['home_team']} vs {m['away_team']}</b> ({m['league']}){value_tag}\n"
         message += f"   🗓️ {m['match_date']} • ⏰ {m['kickoff_wat']}\n"
         message += f"   👉 Pick: <code>{m['prediction']}</code> (@{m['odds']:.2f})\n"
     message += f"💵 <b>Total Odds: ~{total_5:.2f}</b>\n\n"
 
     message += "<b>🚀 10+ HIGH-ODDS TICKET</b>\n"
     for i, m in enumerate(slip_10, 1):
-        message += f"{i}. <b>{m['home_team']} vs {m['away_team']}</b> ({m['league']})\n"
+        value_tag = " 🔥" if m.get("is_value_pick") else ""
+        message += f"{i}. <b>{m['home_team']} vs {m['away_team']}</b> ({m['league']}){value_tag}\n"
         message += f"   🗓️ {m['match_date']} • ⏰ {m['kickoff_wat']}\n"
         message += f"   👉 Pick: <code>{m['prediction']}</code> (@{m['odds']:.2f})\n"
     message += f"💥 <b>Total Combined Odds: {total_10:.2f}</b>"
 
     reply_markup = {
         "inline_keyboard": [
-            [
-                {"text": "🌐 Open Predictions Web App", "url": WEB_APP_URL}
-            ]
+            [{"text": "🌐 Open Predictions Web App", "url": WEB_APP_URL}]
         ]
     }
 
@@ -328,3 +331,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
