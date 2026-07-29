@@ -14,6 +14,11 @@ class HealthCheckHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(b"Bot is alive and polling!")
 
+    def do_HEAD(self):
+        # Handles UptimeRobot HEAD requests
+        self.send_response(200)
+        self.end_headers()
+
     def log_message(self, format, *args):
         return  # Silence HTTP server logs in console
 
@@ -156,4 +161,4 @@ if __name__ == "__main__":
         print("❌ Error: TELEGRAM_BOT_TOKEN environment variable is missing.")
     else:
         poll_updates()
-                    
+        
