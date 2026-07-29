@@ -2,8 +2,33 @@ import os
 import json
 import time
 import requests
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
-# Telegram Secrets
+# -------------------------------------------------------------
+# 1. Lightweight HTTP Server for Cloud Health Checks
+# -------------------------------------------------------------
+class HealthCheckHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Bot is alive and polling!")
+
+    def log_message(self, format, *args):
+        return  # Silence HTTP server logs in console
+
+def start_health_check_server():
+    port = int(os.environ.get("PORT", 10000))
+    server = HTTPServer(("0.0.0.0", port), HealthCheckHandler)
+    print(f"🌐 Health check server listening on port {port}")
+    server.serve_forever()
+
+# Launch HTTP server in background thread
+threading.Thread(target=start_health_check_server, daemon=True).start()
+
+# -------------------------------------------------------------
+# 2. Telegram Bot Command Logic
+# -------------------------------------------------------------
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 API_URL = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}"
 
@@ -131,4 +156,4 @@ if __name__ == "__main__":
         print("❌ Error: TELEGRAM_BOT_TOKEN environment variable is missing.")
     else:
         poll_updates()
-      
+                    
