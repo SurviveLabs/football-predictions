@@ -7,10 +7,10 @@ from datetime import datetime, timezone, timedelta
 API_KEY = os.environ.get("FOOTBALL_API_KEY")
 API_URL = "https://v3.football.api-sports.io/fixtures"
 
-# Telegram Secrets
+# Telegram Secrets & Web App Configuration
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
-WEB_APP_URL = "https://survivelabs.github.io/football-predictions/"  # Replace with your actual GitHub Pages URL
+WEB_APP_URL = "https://survivelabs.github.io/football-predictions/index.html"  
 
 HEADERS = {
     "x-apisports-key": API_KEY
@@ -40,7 +40,7 @@ LOWER_LEAGUE_IDS = {
     255,                # USA USL Championship
     # Scotland
     180, 181, 182,      # Championship, League One, League Two
-    # Scandinavia & Europe (Active summer leagues)
+    # Scandinavia & Europe
     114,                # Sweden Superettan
     104,                # Norway 1. Division
     245,                # Finland Ykkösliiga / Ykkönen
@@ -170,10 +170,22 @@ def process_fixtures(fixtures):
     return predictions_data
 
 def build_diverse_ticket(predictions, target_odds, sort_by="confidence"):
+    today_str = datetime.now(WAT_TIMEZONE).strftime("%b %d")
+
+    # Priority 1: Today's matches (1) over Tomorrow's matches (0)
+    # Priority 2: Highest Confidence or Highest Odds
     if sort_by == "odds":
-        sorted_matches = sorted(predictions, key=lambda x: x.get("odds", 1.50), reverse=True)
+        sorted_matches = sorted(
+            predictions, 
+            key=lambda x: (1 if x.get("match_date") == today_str else 0, x.get("odds", 1.50)), 
+            reverse=True
+        )
     else:
-        sorted_matches = sorted(predictions, key=lambda x: x["confidence_num"], reverse=True)
+        sorted_matches = sorted(
+            predictions, 
+            key=lambda x: (1 if x.get("match_date") == today_str else 0, x["confidence_num"]), 
+            reverse=True
+        )
 
     selected_matches = []
     total_odds = 1.0
@@ -316,4 +328,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
