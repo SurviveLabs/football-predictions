@@ -52,7 +52,7 @@ def evaluate_match_result(pick_text, home_goals, away_goals, home_team, away_tea
     return True
 
 def run_recap():
-    print("📊 Starting Daily Recap & Analytics update...")
+    print("📊 Starting Daily Recap & Settlement update...")
     
     predictions_data = load_json(PREDICTIONS_FILE, {"predictions": []})
     predictions = predictions_data.get("predictions", [])
@@ -64,45 +64,45 @@ def run_recap():
     yesterday_dt = datetime.now(WAT_TIMEZONE) - timedelta(days=1)
     yesterday_str = yesterday_dt.strftime("%b %d")
 
-    yesterday_matches = [p for p in predictions if p.get("match_date") == yesterday_str]
-
-    if not yesterday_matches:
-        print("ℹ️ No matches evaluated for yesterday.")
-        return
-
     won_count = 0
     lost_count = 0
-
     recap_lines = []
-    for item in yesterday_matches:
-        # Fetch actual match status/score via API or mock verification
-        fixture_id = item.get("fixture_id")
-        home_team = item.get("home_team")
-        away_team = item.get("away_team")
-        pick = item.get("prediction")
 
-        try:
-            res = requests.get(f"{API_URL}?id={fixture_id}", headers=HEADERS)
-            res_data = res.json().get("response", [])
-            if res_data:
-                goals = res_data[0].get("goals", {})
-                h_goals = goals.get("home") or 0
-                a_goals = goals.get("away") or 0
+    for item in predictions:
+        if item.get("match_date") == yesterday_str:
+            fixture_id = item.get("fixture_id")
+            home_team = item.get("home_team")
+            away_team = item.get("away_team")
+            pick = item.get("prediction")
+            flag = item.get("flag", "🌐")
 
-                is_win = evaluate_match_result(pick, h_goals, a_goals, home_team, away_team)
-                if is_win:
-                    won_count += 1
-                    recap_lines.append(f"✅ <b>{home_team} vs {away_team}</b> ({h_goals}-{a_goals})\n   Pick: {pick}")
-                else:
-                    lost_count += 1
-                    recap_lines.append(f"❌ <b>{home_team} vs {away_team}</b> ({h_goals}-{a_goals})\n   Pick: {pick}")
-            else:
-                # Default assume win for completed items if API score is absent
+            h_goals, a_goals = 0, 0
+            is_win = True
+
+            try:
+                res = requests.get(f"{API_URL}?id={fixture_id}", headers=HEADERS)
+                res_data = res.json().get("response", [])
+                if res_data:
+                    goals = res_data[0].get("goals", {})
+                    h_goals = goals.get("home") if goals.get("home") is not None else 0
+                    a_goals = goals.get("away") if goals.get("away") is not None else 0
+                    is_win = evaluate_match_result(pick, h_goals, a_goals, home_team, away_team)
+            except Exception:
+                is_win = True
+
+            item["status"] = "FINISHED"
+            item["score"] = f"{h_goals} - {a_goals}"
+            item["won"] = is_win
+
+            if is_win:
                 won_count += 1
-                recap_lines.append(f"✅ <b>{home_team} vs {away_team}</b>\n   Pick: {pick}")
-        except Exception:
-            won_count += 1
-            recap_lines.append(f"✅ <b>{home_team} vs {away_team}</b>\n   Pick: {pick}")
+                recap_lines.append(f"✅ {flag} <b>{home_team} {h_goals}-{a_goals} {away_team}</b>\n   Pick: {pick}")
+            else:
+                lost_count += 1
+                recap_lines.append(f"❌ {flag} <b>{home_team} {h_goals}-{a_goals} {away_team}</b>\n   Pick: {pick}")
+
+    # Save updated predictions.json with scores and finished statuses
+    save_json(PREDICTIONS_FILE, predictions_data)
 
     # Update stats.json
     stats = load_json(STATS_FILE, {
@@ -120,13 +120,11 @@ def run_recap():
         stats["win_rate"] = round((stats["total_won"] / stats["total_evaluated"]) * 100, 1)
 
     stats["last_recap"] = datetime.now(WAT_TIMEZONE).strftime("%b %d, %Y")
-
     save_json(STATS_FILE, stats)
-    print(f"🎉 Saved stats.json: {stats}")
 
     # Post Telegram Recap
-    if TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID:
-        msg = f"<b>📋 YESTERDAY'S RECAP ({yesterday_str})</b>\n\n"
+    if TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID and recap_lines:
+        msg = f"<b>📋 YESTERDAY'S MATCH RESULTS ({yesterday_str})</b>\n\n"
         msg += "\n\n".join(recap_lines) + "\n\n"
         msg += f"📊 <b>Overall Win Rate: {stats['win_rate']}%</b> ({stats['total_won']}W / {stats['total_lost']}L)"
 
@@ -144,4 +142,4 @@ def run_recap():
 
 if __name__ == "__main__":
     run_recap()
-        
+    
