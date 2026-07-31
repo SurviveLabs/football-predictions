@@ -15,6 +15,8 @@
             --border-color: #334155;
             --badge-bg: #3b82f6;
             --value-bg: #f59e0b;
+            --win-color: #10b981;
+            --loss-color: #ef4444;
             --drawer-bg: #0f172ae6;
         }
 
@@ -175,6 +177,17 @@
             box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
         }
 
+        .result-badge {
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-weight: 800;
+            font-size: 0.75rem;
+            color: #ffffff;
+        }
+
+        .result-badge.win { background-color: var(--win-color); }
+        .result-badge.loss { background-color: var(--loss-color); }
+
         .match-time {
             color: var(--text-muted);
             font-weight: 500;
@@ -190,9 +203,15 @@
 
         .match-teams span {
             color: var(--accent-color);
-            margin: 0 4px;
+            margin: 0 6px;
             font-weight: 400;
             font-size: 0.9rem;
+        }
+
+        .score-display {
+            color: #f59e0b;
+            font-weight: 800;
+            font-size: 1rem;
         }
 
         .card-footer {
@@ -234,11 +253,6 @@
             border-radius: 6px;
             font-size: 0.75rem;
             cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .btn-copy-single:hover {
-            background: rgba(255, 255, 255, 0.2);
         }
 
         .confidence {
@@ -254,7 +268,6 @@
             display: inline-block;
             margin-right: 8px;
             vertical-align: middle;
-            transition: all 0.2s;
         }
 
         .card.selected .select-checkbox {
@@ -275,24 +288,10 @@
             justify-content: space-between;
             align-items: center;
             z-index: 1000;
-            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.5);
             transition: transform 0.3s ease;
         }
 
-        .slip-drawer.hidden {
-            transform: translateY(100%);
-        }
-
-        .slip-count {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-        }
-
-        .slip-odds {
-            font-size: 1.2rem;
-            font-weight: 800;
-            color: var(--accent-color);
-        }
+        .slip-drawer.hidden { transform: translateY(100%); }
 
         .btn-copy-slip {
             background-color: var(--accent-color);
@@ -303,10 +302,6 @@
             font-weight: 700;
             font-size: 0.9rem;
             cursor: pointer;
-        }
-
-        .btn-copy-slip:hover {
-            background-color: var(--accent-hover);
         }
 
         .toast {
@@ -324,9 +319,7 @@
             transition: transform 0.3s ease;
         }
 
-        .toast.show {
-            transform: translateX(-50%) translateY(0);
-        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
 
         .state-msg {
             text-align: center;
@@ -358,6 +351,7 @@
         <nav class="filter-bar">
             <button class="filter-btn active" onclick="filterPredictions('All')">All Matches</button>
             <button class="filter-btn" onclick="filterPredictions('Value')">🔥 Value Picks</button>
+            <button class="filter-btn" onclick="filterPredictions('Results')">🏆 Results / Finished</button>
             <button class="filter-btn" onclick="filterPredictions('Straight Pick')">Straight Pick</button>
             <button class="filter-btn" onclick="filterPredictions('Goals')">Goals (Over/BTTS)</button>
             <button class="filter-btn" onclick="filterPredictions('Double Chance')">Double Chance</button>
@@ -413,10 +407,8 @@
             const container = document.getElementById("predictions-container");
             const lastUpdatedEl = document.getElementById("last-updated");
 
-            const cacheBusterUrl = `predictions.json?t=${new Date().getTime()}`;
-
             try {
-                const response = await fetch(cacheBusterUrl);
+                const response = await fetch(`predictions.json?t=${new Date().getTime()}`);
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
                 const data = await response.json();
@@ -435,7 +427,6 @@
                 renderPredictions();
 
             } catch (error) {
-                console.error("❌ Error fetching predictions.json:", error);
                 container.innerHTML = `<div class="state-msg" style="color: #ef4444;">❌ Failed to load predictions. Please refresh.</div>`;
             }
         }
@@ -461,6 +452,8 @@
 
             if (currentFilter === 'Value') {
                 filtered = allPredictions.filter(item => item.is_value_pick);
+            } else if (currentFilter === 'Results') {
+                filtered = allPredictions.filter(item => item.status === 'FINISHED' || item.won !== null);
             } else if (currentFilter === 'Goals') {
                 filtered = allPredictions.filter(item => item.market_cat === 'Goals' || item.market_cat === 'BTTS');
             } else if (currentFilter !== 'All') {
@@ -482,19 +475,33 @@
                     togglePick(item);
                 };
 
+                const flag = item.flag || '🌐';
                 const valueBadge = item.is_value_pick ? `<span class="value-badge">🔥 Value Pick</span>` : '';
+                
+                let resultBadge = '';
+                if (item.won === true) {
+                    resultBadge = `<span class="result-badge win">✅ WIN</span>`;
+                } else if (item.won === false) {
+                    resultBadge = `<span class="result-badge loss">❌ LOSS</span>`;
+                }
+
+                const scoreText = (item.score && item.score !== 'VS') 
+                    ? `<span class="score-display">${escapeHtml(item.score)}</span>` 
+                    : `<span>vs</span>`;
 
                 card.innerHTML = `
                     <div class="card-header">
                         <div>
                             <span class="select-checkbox"></span>
-                            <span class="league-badge">${escapeHtml(item.league)}</span>
+                            <span class="league-badge">${flag} ${escapeHtml(item.league)}</span>
                             ${valueBadge}
                         </div>
-                        <span class="match-time">🗓️ ${escapeHtml(item.match_date)} • ⏰ ${escapeHtml(item.kickoff_wat)}</span>
+                        <div>
+                            ${resultBadge ? resultBadge : `<span class="match-time">🗓️ ${escapeHtml(item.match_date)} • ⏰ ${escapeHtml(item.kickoff_wat)}</span>`}
+                        </div>
                     </div>
                     <div class="match-teams">
-                        ${escapeHtml(item.home_team)} <span>vs</span> ${escapeHtml(item.away_team)}
+                        ${escapeHtml(item.home_team)} ${scoreText} ${escapeHtml(item.away_team)}
                     </div>
                     <div class="card-footer">
                         <div>
@@ -553,7 +560,8 @@
             
             let slipText = `⚽ *MY CUSTOM PREDICTION SLIP*\n\n`;
             selectedPicks.forEach((m, idx) => {
-                slipText += `${idx + 1}. *${m.home_team} vs ${m.away_team}*\n`;
+                const flag = m.flag || '🌐';
+                slipText += `${idx + 1}. ${flag} *${m.home_team} vs ${m.away_team}*\n`;
                 slipText += `   🗓️ ${m.match_date} • ⏰ ${m.kickoff_wat}\n`;
                 slipText += `   👉 Pick: ${m.prediction} (@${parseFloat(m.odds).toFixed(2)})\n\n`;
             });
