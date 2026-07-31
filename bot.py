@@ -5,9 +5,7 @@ import requests
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
-# -------------------------------------------------------------
-# 1. Lightweight HTTP Server for Cloud Health Checks
-# -------------------------------------------------------------
+# 1. Health Check Server for Render
 class HealthCheckHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -15,25 +13,20 @@ class HealthCheckHandler(BaseHTTPRequestHandler):
         self.wfile.write(b"Bot is alive and polling!")
 
     def do_HEAD(self):
-        # Handles UptimeRobot HEAD requests
         self.send_response(200)
         self.end_headers()
 
     def log_message(self, format, *args):
-        return  # Silence HTTP server logs in console
+        return
 
 def start_health_check_server():
     port = int(os.environ.get("PORT", 10000))
     server = HTTPServer(("0.0.0.0", port), HealthCheckHandler)
-    print(f"🌐 Health check server listening on port {port}")
     server.serve_forever()
 
-# Launch HTTP server in background thread
 threading.Thread(target=start_health_check_server, daemon=True).start()
 
-# -------------------------------------------------------------
-# 2. Telegram Bot Command Logic
-# -------------------------------------------------------------
+# 2. Telegram Bot Logic
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 API_URL = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}"
 
@@ -65,23 +58,25 @@ def handle_start(chat_id):
     msg = (
         "<b>👋 Welcome to Lower League Predictions Bot!</b>\n\n"
         "Here are the commands you can use anytime:\n"
-        "⚽ /today - View today's prediction slips\n"
+        "⚽ /today - View today's top prediction slips\n"
         "🔥 /top3 - Get top 3 highest confidence picks\n"
+        "🏆 /results - View completed match scores & settlements\n"
         "📊 /stats - Check win rate & overall performance\n"
-        "❓ /help - View this command menu"
+        "❓ /help - View command menu"
     )
     send_message(chat_id, msg)
 
 def handle_today(chat_id):
     predictions, last_updated = get_today_predictions()
     if not predictions:
-        send_message(chat_id, "⚠️ No predictions available right now. Check back soon!")
+        send_message(chat_id, "⚠️ No predictions available right now.")
         return
 
     msg = f"<b>⚽ TODAY'S TOP PREDICTIONS</b>\n<i>Updated: {last_updated}</i>\n\n"
     for idx, m in enumerate(predictions[:5], 1):
         value_tag = " 🔥" if m.get("is_value_pick") else ""
-        msg += f"{idx}. <b>{m['home_team']} vs {m['away_team']}</b> ({m['league']}){value_tag}\n"
+        flag = m.get("flag", "🌐")
+        msg += f"{idx}. {flag} <b>{m['home_team']} vs {m['away_team']}</b> ({m['league']}){value_tag}\n"
         msg += f"   🗓️ {m['match_date']} • ⏰ {m['kickoff_wat']}\n"
         msg += f"   👉 Pick: <code>{m['prediction']}</code> (@{m['odds']:.2f})\n\n"
 
@@ -96,9 +91,28 @@ def handle_top3(chat_id):
     top3 = sorted(predictions, key=lambda x: x.get("confidence_num", 0), reverse=True)[:3]
     msg = "<b>🔥 TOP 3 HIGHEST CONFIDENCE PICKS</b>\n\n"
     for idx, m in enumerate(top3, 1):
-        msg += f"{idx}. <b>{m['home_team']} vs {m['away_team']}</b>\n"
+        flag = m.get("flag", "🌐")
+        msg += f"{idx}. {flag} <b>{m['home_team']} vs {m['away_team']}</b>\n"
         msg += f"   🏆 Confidence: <b>{m['confidence']}</b>\n"
         msg += f"   👉 Pick: <code>{m['prediction']}</code> (@{m['odds']:.2f})\n\n"
+
+    send_message(chat_id, msg)
+
+def handle_results(chat_id):
+    predictions, _ = get_today_predictions()
+    finished = [m for m in predictions if m.get("status") == "FINISHED" or m.get("won") is not None]
+
+    if not finished:
+        send_message(chat_id, "⏳ Today's matches are still in progress or upcoming. Check back after full-time!")
+        return
+
+    msg = "<b>🏆 LATEST MATCH RESULTS & SETTLEMENTS</b>\n\n"
+    for m in finished[:8]:
+        status_icon = "✅ WON" if m.get("won") else "❌ LOST"
+        flag = m.get("flag", "🌐")
+        msg += f"{flag} <b>{m['home_team']} {m.get('score', 'VS')} {m['away_team']}</b>\n"
+        msg += f"   👉 Pick: <code>{m['prediction']}</code> (@{m['odds']:.2f})\n"
+        msg += f"   🎯 Result: <b>{status_icon}</b>\n\n"
 
     send_message(chat_id, msg)
 
@@ -115,11 +129,7 @@ def handle_stats(chat_id):
 
 def send_message(chat_id, text):
     url = f"{API_URL}/sendMessage"
-    payload = {
-        "chat_id": chat_id,
-        "text": text,
-        "parse_mode": "HTML"
-    }
+    payload = {"chat_id": chat_id, "text": text, "parse_mode": "HTML"}
     try:
         requests.post(url, json=payload)
     except Exception as e:
@@ -150,6 +160,8 @@ def poll_updates():
                         handle_today(chat_id)
                     elif text == "/top3":
                         handle_top3(chat_id)
+                    elif text == "/results":
+                        handle_results(chat_id)
                     elif text == "/stats":
                         handle_stats(chat_id)
         except Exception as e:
@@ -157,8 +169,6 @@ def poll_updates():
             time.sleep(5)
 
 if __name__ == "__main__":
-    if not TELEGRAM_BOT_TOKEN:
-        print("❌ Error: TELEGRAM_BOT_TOKEN environment variable is missing.")
-    else:
+    if TELEGRAM_BOT_TOKEN:
         poll_updates()
-        
+    
