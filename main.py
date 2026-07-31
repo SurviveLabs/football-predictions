@@ -20,39 +20,23 @@ HEADERS = {
 WAT_TIMEZONE = timezone(timedelta(hours=1))
 LOCAL_TIMEZONE_NAME = "Africa/Lagos"
 
-# Whitelist focused on Lower & Secondary Tier Leagues
+# Country Flag Mapping
+COUNTRY_FLAGS = {
+    "England": "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "Spain": "🇪🇸", "Italy": "🇮🇹", "Germany": "🇩🇪",
+    "France": "🇫🇷", "Netherlands": "🇳🇱", "Portugal": "🇵🇹", "Brazil": "🇧🇷",
+    "Argentina": "🇦🇷", "USA": "🇺🇸", "Scotland": "🏴󠁧󠁢󠁳󠁣󠁴󠁿", "Sweden": "🇸🇪",
+    "Norway": "🇳🇴", "Finland": "🇫🇮", "Ireland": "🇮🇪", "Iceland": "🇮🇸",
+    "Denmark": "🇩🇰", "Austria": "🇦🇹", "Switzerland": "🇨🇭", "Belgium": "🇧🇪",
+    "Japan": "🇯🇵", "South Korea": "🇰🇷", "World": "🌐"
+}
+
+def get_country_flag(country_name):
+    return COUNTRY_FLAGS.get(country_name, "🌐")
+
 LOWER_LEAGUE_IDS = {
-    # England
-    40, 41, 42, 43,     # Championship, League One, League Two, National League
-    # Spain
-    141, 142,           # Segunda División, Primera RFEF
-    # Italy
-    136, 138,           # Serie B, Serie C
-    # Germany
-    79, 80,             # 2. Bundesliga, 3. Liga
-    # France
-    62, 63,             # Ligue 2, National
-    # Netherlands & Portugal
-    89, 95,             # Eerste Divisie, Liga Portugal 2
-    # Americas
-    72, 73,             # Brasileirão Serie B, Serie C
-    129,                # Argentina Primera Nacional
-    255,                # USA USL Championship
-    # Scotland
-    180, 181, 182,      # Championship, League One, League Two
-    # Scandinavia & Europe
-    114,                # Sweden Superettan
-    104,                # Norway 1. Division
-    245,                # Finland Ykkösliiga / Ykkönen
-    358,                # Ireland First Division
-    303,                # Iceland 1. Deild
-    120,                # Denmark 1. Division
-    219,                # Austria 2. Liga
-    208,                # Switzerland Challenge League
-    145,                # Belgium Challenger Pro League
-    # Asia
-    99, 100,            # Japan J2 League, J3 League
-    293                 # South Korea K League 2
+    40, 41, 42, 43, 141, 142, 136, 138, 79, 80, 62, 63,
+    89, 95, 72, 73, 129, 255, 180, 181, 182, 114, 104, 245,
+    358, 303, 120, 219, 208, 145, 99, 100, 293
 }
 
 EXCLUDE_KEYWORDS = [
@@ -140,15 +124,18 @@ def process_fixtures(fixtures):
         home_team = teams.get("home", {}).get("name", "Home Team")
         away_team = teams.get("away", {}).get("name", "Away Team")
         league_name = league.get("name", "Unknown League")
+        country_name = league.get("country", "World")
+        flag_emoji = get_country_flag(country_name)
 
         prediction_text, confidence_score, exact_odds, market_cat = generate_diversified_prediction(fixture_id, home_team, away_team)
         match_date, match_time = format_match_datetime(fixture.get("date", ""))
 
-        # Value Pick: Confidence >= 85% AND Odds >= 1.80
         is_value_pick = (confidence_score >= 85 and exact_odds >= 1.80)
 
         match_info = {
             "fixture_id": fixture_id,
+            "country": country_name,
+            "flag": flag_emoji,
             "league": league_name,
             "match": f"{home_team} vs {away_team}",
             "home_team": home_team,
@@ -161,6 +148,9 @@ def process_fixtures(fixtures):
             "confidence": f"{confidence_score}%",
             "odds": exact_odds,
             "is_value_pick": is_value_pick,
+            "status": "UPCOMING",
+            "score": "VS",
+            "won": None,
             "date": fixture.get("date", "")
         }
         predictions_data.append(match_info)
@@ -170,7 +160,6 @@ def process_fixtures(fixtures):
         match["rank"] = index
 
     predictions_data.sort(key=lambda x: x.get("date", ""))
-
     return predictions_data
 
 def build_diverse_ticket(predictions, target_odds, sort_by="confidence"):
@@ -195,7 +184,6 @@ def build_diverse_ticket(predictions, target_odds, sort_by="confidence"):
 
     for match in sorted_matches:
         category = match.get("market_cat", "General")
-
         if category_counts.get(category, 0) >= 2:
             continue
 
@@ -225,7 +213,7 @@ def send_telegram_broadcast(predictions):
         print("⚠️ No predictions available to broadcast.")
         return
 
-    slip_3, total_3 = build_diverse_ticket(predictions, 3.0, sort_by="confidence")
+    # ONLY 5-ODDS AND 10-ODDS TICKETS
     slip_5, total_5 = build_diverse_ticket(predictions, 5.0, sort_by="confidence")
     slip_10, total_10 = build_diverse_ticket(predictions, 10.0, sort_by="odds")
 
@@ -234,18 +222,11 @@ def send_telegram_broadcast(predictions):
     message = "<b>⚽ DAILY PREDICTION TICKETS ⚽</b>\n"
     message += f"<i>Updated: {now_str}</i>\n\n"
 
-    message += "<b>🎯 3-ODDS SAFE SLIP</b>\n"
-    for i, m in enumerate(slip_3, 1):
-        value_tag = " 🔥" if m.get("is_value_pick") else ""
-        message += f"{i}. <b>{m['home_team']} vs {m['away_team']}</b> ({m['league']}){value_tag}\n"
-        message += f"   🗓️ {m['match_date']} • ⏰ {m['kickoff_wat']}\n"
-        message += f"   👉 Pick: <code>{m['prediction']}</code> (@{m['odds']:.2f})\n"
-    message += f"💵 <b>Total Odds: ~{total_3:.2f}</b>\n\n"
-
     message += "<b>🔥 5-ODDS MEDIUM SLIP</b>\n"
     for i, m in enumerate(slip_5, 1):
         value_tag = " 🔥" if m.get("is_value_pick") else ""
-        message += f"{i}. <b>{m['home_team']} vs {m['away_team']}</b> ({m['league']}){value_tag}\n"
+        flag = m.get("flag", "🌐")
+        message += f"{i}. {flag} <b>{m['home_team']} vs {m['away_team']}</b> ({m['league']}){value_tag}\n"
         message += f"   🗓️ {m['match_date']} • ⏰ {m['kickoff_wat']}\n"
         message += f"   👉 Pick: <code>{m['prediction']}</code> (@{m['odds']:.2f})\n"
     message += f"💵 <b>Total Odds: ~{total_5:.2f}</b>\n\n"
@@ -253,10 +234,11 @@ def send_telegram_broadcast(predictions):
     message += "<b>🚀 10+ HIGH-ODDS TICKET</b>\n"
     for i, m in enumerate(slip_10, 1):
         value_tag = " 🔥" if m.get("is_value_pick") else ""
-        message += f"{i}. <b>{m['home_team']} vs {m['away_team']}</b> ({m['league']}){value_tag}\n"
+        flag = m.get("flag", "🌐")
+        message += f"{i}. {flag} <b>{m['home_team']} vs {m['away_team']}</b> ({m['league']}){value_tag}\n"
         message += f"   🗓️ {m['match_date']} • ⏰ {m['kickoff_wat']}\n"
         message += f"   👉 Pick: <code>{m['prediction']}</code> (@{m['odds']:.2f})\n"
-    message += f"💥 <b>Total Combined Odds: {total_10:.2f}</b>"
+    message += f"💥 <b>Total Combined Odds: ~{total_10:.2f}</b>"
 
     reply_markup = {
         "inline_keyboard": [
@@ -278,31 +260,6 @@ def send_telegram_broadcast(predictions):
         print("🚀 Telegram ticket broadcast posted successfully!")
     except Exception as e:
         print(f"❌ Failed to broadcast to Telegram: {e}")
-
-    send_channel_poll(predictions)
-
-def send_channel_poll(predictions):
-    if not predictions:
-        return
-
-    top_match = sorted(predictions, key=lambda x: x["confidence_num"], reverse=True)[0]
-    
-    question = f"🗳️ MATCH OF THE DAY POLL: {top_match['home_team']} vs {top_match['away_team']}! Who wins?"
-    options = json.dumps([f"🔴 {top_match['home_team']}", "🤝 Draw", f"🔵 {top_match['away_team']}"])
-
-    telegram_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendPoll"
-    payload = {
-        "chat_id": TELEGRAM_CHAT_ID,
-        "question": question,
-        "options": options,
-        "is_anonymous": False
-    }
-
-    try:
-        requests.post(telegram_url, data=payload)
-        print("📊 Channel poll posted successfully!")
-    except Exception as e:
-        print(f"⚠️ Could not post channel poll: {e}")
 
 def main():
     print("⚽ Fetching fixtures from API-Football...")
@@ -326,9 +283,8 @@ def main():
         json.dump(output_payload, f, indent=4)
 
     print(f"🎉 File generated at {now_wat}: predictions.json")
-
     send_telegram_broadcast(predictions)
 
 if __name__ == "__main__":
     main()
-    
+        
