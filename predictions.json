@@ -1,5 +1,5 @@
 {
-    "last_updated": "2026-08-02 12:07 PM WAT",
+    "last_updated": "2026-08-02 06:44 PM WAT",
     "predictions": [
         {
             "fixture_id": 1493605,
@@ -398,28 +398,6 @@
             "rank": 36
         },
         {
-            "fixture_id": 1495902,
-            "country": "Norway",
-            "flag": "\ud83c\uddf3\ud83c\uddf4",
-            "league": "1. Division",
-            "match": "Raufoss vs Stabaek",
-            "home_team": "Raufoss",
-            "away_team": "Stabaek",
-            "match_date": "Aug 02",
-            "kickoff_wat": "04:00 PM",
-            "prediction": "Double Chance (Raufoss or Draw)",
-            "market_cat": "Double Chance",
-            "confidence_num": 90,
-            "confidence": "90%",
-            "odds": 1.28,
-            "is_value_pick": false,
-            "status": "UPCOMING",
-            "score": "VS",
-            "won": null,
-            "date": "2026-08-02T16:00:00+01:00",
-            "rank": 3
-        },
-        {
             "fixture_id": 1495900,
             "country": "Norway",
             "flag": "\ud83c\uddf3\ud83c\uddf4",
@@ -528,6 +506,28 @@
             "won": null,
             "date": "2026-08-02T16:00:00+01:00",
             "rank": 37
+        },
+        {
+            "fixture_id": 1495902,
+            "country": "Norway",
+            "flag": "\ud83c\uddf3\ud83c\uddf4",
+            "league": "1. Division",
+            "match": "Raufoss vs Stabaek",
+            "home_team": "Raufoss",
+            "away_team": "Stabaek",
+            "match_date": "Aug 02",
+            "kickoff_wat": "04:15 PM",
+            "prediction": "Double Chance (Raufoss or Draw)",
+            "market_cat": "Double Chance",
+            "confidence_num": 90,
+            "confidence": "90%",
+            "odds": 1.28,
+            "is_value_pick": false,
+            "status": "UPCOMING",
+            "score": "VS",
+            "won": null,
+            "date": "2026-08-02T16:15:00+01:00",
+            "rank": 3
         },
         {
             "fixture_id": 1498701,
