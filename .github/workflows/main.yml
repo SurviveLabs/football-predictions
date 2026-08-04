@@ -1,20 +1,22 @@
-name: Update Predictions
+name: Football Predictions & Results Pipeline
 
 on:
   schedule:
-    - cron: '0 6 * * *'   # Runs daily at 7:00 AM WAT (06:00 UTC)
-    - cron: '0 14 * * *'  # Runs daily at 3:00 PM WAT (14:00 UTC)
-  workflow_dispatch:
-
-permissions:
-  contents: write
+    # 06:00 UTC = 07:00 AM WAT (Morning Predictions)
+    - cron: '0 6 * * *'
+    # 22:00 UTC = 11:00 PM WAT (Night Results & Settlement)
+    - cron: '0 22 * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
+  push:
+    branches:
+      - main
 
 jobs:
-  run-predictions:
+  run-pipeline:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Set up Python
@@ -27,16 +29,25 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests
 
-      - name: Fetch Predictions & Broadcast to Telegram
+      - name: Run Daily Recap & Settlement
+        env:
+          FOOTBALL_API_KEY: ${{ secrets.FOOTBALL_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python recap.py
+
+      - name: Run Predictions & Broadcast
         env:
           FOOTBALL_API_KEY: ${{ secrets.FOOTBALL_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python main.py
 
-      - name: Commit and Push Updated Predictions
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "Auto-update predictions.json [skip ci]"
-          file_pattern: "predictions.json"
+      - name: Commit and Push Updated Data
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add predictions.json stats.json
+          git diff-index --quiet HEAD || git commit -m "Auto-update predictions & stats [skip ci]"
+          git push
           
