@@ -10,13 +10,13 @@ API_URL = "https://v3.football.api-sports.io/fixtures"
 # Telegram Secrets & Web App Configuration
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
-WEB_APP_URL = "https://survivelabs.github.io/football-predictions/index.html"  
+WEB_APP_URL = "https://survivelabs.github.io/football-predictions/index.html"
 
 HEADERS = {
     "x-apisports-key": API_KEY
 }
 
-# Fixed WAT (UTC+1 / West Africa Time)
+# Fixed WAT (UTC+1 / West Africa Time - Nigeria)
 WAT_TIMEZONE = timezone(timedelta(hours=1))
 LOCAL_TIMEZONE_NAME = "Africa/Lagos"
 
@@ -56,7 +56,7 @@ def fetch_fixtures():
     all_fixtures = []
 
     for date_str in [today_str, tomorrow_str]:
-        print(f"🔍 Fetching fixtures for date: {date_str}")
+        print(f"🔍 Fetching fixtures for date: {date_str} (Nigeria Time)")
         try:
             params = {
                 "date": date_str,
@@ -85,6 +85,17 @@ def is_valid_fixture(item):
 
     return False
 
+def is_upcoming_wat(utc_date_str):
+    """Check if match kickoff is in the future relative to Nigeria Time (WAT)."""
+    try:
+        dt = datetime.fromisoformat(utc_date_str.replace("Z", "+00:00"))
+        wat_dt = dt.astimezone(WAT_TIMEZONE)
+        now_wat = datetime.now(WAT_TIMEZONE)
+        # Kickoff must be in the future (at least 5 minutes from current WAT)
+        return wat_dt > (now_wat + timedelta(minutes=5))
+    except Exception:
+        return True
+
 def generate_diversified_prediction(fixture_id, home_team, away_team):
     market_matrix = [
         {"pick": f"{home_team} Win", "confidence": 85, "odds": 1.85, "cat": "Straight Pick"},
@@ -112,11 +123,22 @@ def format_match_datetime(utc_date_str):
         return "Today", "TBD"
 
 def process_fixtures(fixtures):
-    filtered_fixtures = [f for f in fixtures if is_valid_fixture(f)]
     predictions_data = []
 
-    for item in filtered_fixtures:
+    for item in fixtures:
+        if not is_valid_fixture(item):
+            continue
+
         fixture = item.get("fixture", {})
+        status_short = fixture.get("status", {}).get("short")
+        match_utc_date = fixture.get("date", "")
+
+        # 🛑 STRICT NIGERIA TIME CHECK:
+        # 1. Match status must be 'NS' (Not Started)
+        # 2. Kickoff time must be in the future relative to WAT
+        if status_short != "NS" or not is_upcoming_wat(match_utc_date):
+            continue
+
         fixture_id = fixture.get("id", 0)
         league = item.get("league", {})
         teams = item.get("teams", {})
@@ -128,7 +150,7 @@ def process_fixtures(fixtures):
         flag_emoji = get_country_flag(country_name)
 
         prediction_text, confidence_score, exact_odds, market_cat = generate_diversified_prediction(fixture_id, home_team, away_team)
-        match_date, match_time = format_match_datetime(fixture.get("date", ""))
+        match_date, match_time = format_match_datetime(match_utc_date)
 
         is_value_pick = (confidence_score >= 85 and exact_odds >= 1.80)
 
@@ -147,11 +169,10 @@ def process_fixtures(fixtures):
             "confidence_num": confidence_score,
             "confidence": f"{confidence_score}%",
             "odds": exact_odds,
-            "is_value_pick": is_value_pick,
             "status": "UPCOMING",
             "score": "VS",
             "won": None,
-            "date": fixture.get("date", "")
+            "date": match_utc_date
         }
         predictions_data.append(match_info)
 
@@ -210,10 +231,9 @@ def send_telegram_broadcast(predictions):
         return
 
     if not predictions:
-        print("⚠️ No predictions available to broadcast.")
+        print("⚠️ No upcoming predictions available to broadcast.")
         return
 
-    # ONLY 5-ODDS AND 10-ODDS TICKETS
     slip_5, total_5 = build_diverse_ticket(predictions, 5.0, sort_by="confidence")
     slip_10, total_10 = build_diverse_ticket(predictions, 10.0, sort_by="odds")
 
@@ -267,7 +287,7 @@ def main():
 
     if raw_fixtures:
         predictions = process_fixtures(raw_fixtures)
-        print(f"✅ Processed {len(predictions)} lower league matches.")
+        print(f"✅ Filtered {len(predictions)} upcoming lower league matches.")
     else:
         print("⚠️ No lower league matches scheduled today or tomorrow.")
         predictions = []
@@ -287,4 +307,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-        
+    
