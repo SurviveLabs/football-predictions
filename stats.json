@@ -4,6 +4,10 @@
     "value_pick_accuracy": "78%",
     "total_slips_won": 42,
     "total_slips_tracked": 50,
-    "last_updated": "Jul 2026"
+    "last_updated": "Jul 2026",
+    "total_evaluated": 0,
+    "total_won": 0,
+    "total_lost": 0,
+    "win_rate": 84.5,
+    "last_recap": "Aug 04, 2026"
 }
-

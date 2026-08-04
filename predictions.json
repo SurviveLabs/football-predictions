@@ -1,28 +1,6 @@
 {
-    "last_updated": "2026-08-04 01:30 PM WAT",
+    "last_updated": "2026-08-04 06:54 PM WAT",
     "predictions": [
-        {
-            "fixture_id": 1546843,
-            "country": "Brazil",
-            "flag": "\ud83c\udde7\ud83c\uddf7",
-            "league": "Copa Do Brasil",
-            "match": "Atletico Paranaense vs Vitoria",
-            "home_team": "Atletico Paranaense",
-            "away_team": "Vitoria",
-            "match_date": "Aug 04",
-            "kickoff_wat": "01:00 AM",
-            "prediction": "Both Teams To Score (BTTS)",
-            "market_cat": "BTTS",
-            "confidence_num": 86,
-            "confidence": "86%",
-            "odds": 1.82,
-            "is_value_pick": true,
-            "status": "UPCOMING",
-            "score": "VS",
-            "won": null,
-            "date": "2026-08-04T01:00:00+01:00",
-            "rank": 2
-        },
         {
             "fixture_id": 1546856,
             "country": "Brazil",
@@ -38,12 +16,11 @@
             "confidence_num": 86,
             "confidence": "86%",
             "odds": 1.48,
-            "is_value_pick": false,
             "status": "UPCOMING",
             "score": "VS",
             "won": null,
             "date": "2026-08-04T23:30:00+01:00",
-            "rank": 3
+            "rank": 2
         },
         {
             "fixture_id": 1546857,
@@ -60,12 +37,11 @@
             "confidence_num": 85,
             "confidence": "85%",
             "odds": 1.85,
-            "is_value_pick": true,
             "status": "UPCOMING",
             "score": "VS",
             "won": null,
             "date": "2026-08-05T01:30:00+01:00",
-            "rank": 6
+            "rank": 5
         },
         {
             "fixture_id": 1517232,
@@ -82,7 +58,6 @@
             "confidence_num": 90,
             "confidence": "90%",
             "odds": 1.28,
-            "is_value_pick": false,
             "status": "UPCOMING",
             "score": "VS",
             "won": null,
@@ -104,12 +79,11 @@
             "confidence_num": 86,
             "confidence": "86%",
             "odds": 1.82,
-            "is_value_pick": true,
             "status": "UPCOMING",
             "score": "VS",
             "won": null,
             "date": "2026-08-05T16:30:00+01:00",
-            "rank": 4
+            "rank": 3
         },
         {
             "fixture_id": 1517234,
@@ -126,12 +100,11 @@
             "confidence_num": 85,
             "confidence": "85%",
             "odds": 1.45,
-            "is_value_pick": false,
             "status": "UPCOMING",
             "score": "VS",
             "won": null,
             "date": "2026-08-05T16:30:00+01:00",
-            "rank": 7
+            "rank": 6
         },
         {
             "fixture_id": 1517235,
@@ -148,12 +121,11 @@
             "confidence_num": 81,
             "confidence": "81%",
             "odds": 1.82,
-            "is_value_pick": false,
             "status": "UPCOMING",
             "score": "VS",
             "won": null,
             "date": "2026-08-05T16:30:00+01:00",
-            "rank": 10
+            "rank": 9
         },
         {
             "fixture_id": 1517236,
@@ -170,12 +142,11 @@
             "confidence_num": 82,
             "confidence": "82%",
             "odds": 1.9,
-            "is_value_pick": false,
             "status": "UPCOMING",
             "score": "VS",
             "won": null,
             "date": "2026-08-05T17:00:00+01:00",
-            "rank": 8
+            "rank": 7
         },
         {
             "fixture_id": 1498650,
@@ -192,12 +163,11 @@
             "confidence_num": 81,
             "confidence": "81%",
             "odds": 1.82,
-            "is_value_pick": false,
             "status": "UPCOMING",
             "score": "VS",
             "won": null,
             "date": "2026-08-05T19:00:00+01:00",
-            "rank": 11
+            "rank": 10
         },
         {
             "fixture_id": 1546852,
@@ -214,12 +184,11 @@
             "confidence_num": 86,
             "confidence": "86%",
             "odds": 1.82,
-            "is_value_pick": true,
             "status": "UPCOMING",
             "score": "VS",
             "won": null,
             "date": "2026-08-05T23:00:00+01:00",
-            "rank": 5
+            "rank": 4
         },
         {
             "fixture_id": 1546855,
@@ -236,12 +205,11 @@
             "confidence_num": 82,
             "confidence": "82%",
             "odds": 1.9,
-            "is_value_pick": false,
             "status": "UPCOMING",
             "score": "VS",
             "won": null,
             "date": "2026-08-05T23:30:00+01:00",
-            "rank": 9
+            "rank": 8
         }
     ]
 }
