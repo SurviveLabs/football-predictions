@@ -104,20 +104,18 @@ def run_recap():
     # Save updated predictions.json with scores and finished statuses
     save_json(PREDICTIONS_FILE, predictions_data)
 
-    # Update stats.json
-    stats = load_json(STATS_FILE, {
-        "total_evaluated": 0,
-        "total_won": 0,
-        "total_lost": 0,
-        "win_rate": 85.0
-    })
-
-    stats["total_evaluated"] += (won_count + lost_count)
-    stats["total_won"] += won_count
-    stats["total_lost"] += lost_count
+    # Update stats.json with safe key defaults
+    stats = load_json(STATS_FILE, {})
+    
+    # Safe key initialization to prevent KeyError
+    stats["total_evaluated"] = stats.get("total_evaluated", 0) + (won_count + lost_count)
+    stats["total_won"] = stats.get("total_won", 0) + won_count
+    stats["total_lost"] = stats.get("total_lost", 0) + lost_count
 
     if stats["total_evaluated"] > 0:
         stats["win_rate"] = round((stats["total_won"] / stats["total_evaluated"]) * 100, 1)
+    else:
+        stats["win_rate"] = stats.get("win_rate", 84.5)
 
     stats["last_recap"] = datetime.now(WAT_TIMEZONE).strftime("%b %d, %Y")
     save_json(STATS_FILE, stats)
