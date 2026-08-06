@@ -86,12 +86,10 @@ def is_valid_fixture(item):
     return False
 
 def is_upcoming_wat(utc_date_str):
-    """Check if match kickoff is in the future relative to Nigeria Time (WAT)."""
     try:
         dt = datetime.fromisoformat(utc_date_str.replace("Z", "+00:00"))
         wat_dt = dt.astimezone(WAT_TIMEZONE)
         now_wat = datetime.now(WAT_TIMEZONE)
-        # Kickoff must be in the future (at least 5 minutes from current WAT)
         return wat_dt > (now_wat + timedelta(minutes=5))
     except Exception:
         return True
@@ -117,7 +115,7 @@ def format_match_datetime(utc_date_str):
         dt = datetime.fromisoformat(utc_date_str.replace("Z", "+00:00"))
         wat_dt = dt.astimezone(WAT_TIMEZONE)
         match_date = wat_dt.strftime("%b %d")
-        match_time = wat_dt.strftime("%I:%M %p")
+        match_time = wat_dt.strftime("%I:%M %p WAT")
         return match_date, match_time
     except Exception:
         return "Today", "TBD"
@@ -133,9 +131,6 @@ def process_fixtures(fixtures):
         status_short = fixture.get("status", {}).get("short")
         match_utc_date = fixture.get("date", "")
 
-        # 🛑 STRICT NIGERIA TIME CHECK:
-        # 1. Match status must be 'NS' (Not Started)
-        # 2. Kickoff time must be in the future relative to WAT
         if status_short != "NS" or not is_upcoming_wat(match_utc_date):
             continue
 
@@ -151,8 +146,6 @@ def process_fixtures(fixtures):
 
         prediction_text, confidence_score, exact_odds, market_cat = generate_diversified_prediction(fixture_id, home_team, away_team)
         match_date, match_time = format_match_datetime(match_utc_date)
-
-        is_value_pick = (confidence_score >= 85 and exact_odds >= 1.80)
 
         match_info = {
             "fixture_id": fixture_id,
@@ -180,50 +173,22 @@ def process_fixtures(fixtures):
     for index, match in enumerate(predictions_data, start=1):
         match["rank"] = index
 
-    predictions_data.sort(key=lambda x: x.get("date", ""))
     return predictions_data
 
-def build_diverse_ticket(predictions, target_odds, sort_by="confidence"):
-    today_str = datetime.now(WAT_TIMEZONE).strftime("%b %d")
-
-    if sort_by == "odds":
-        sorted_matches = sorted(
-            predictions, 
-            key=lambda x: (1 if x.get("match_date") == today_str else 0, x.get("odds", 1.50)), 
-            reverse=True
-        )
-    else:
-        sorted_matches = sorted(
-            predictions, 
-            key=lambda x: (1 if x.get("match_date") == today_str else 0, x["confidence_num"]), 
-            reverse=True
-        )
-
-    selected_matches = []
+def get_best_today_picks(predictions, min_confidence=85, max_games=5):
+    sorted_predictions = sorted(predictions, key=lambda x: x["confidence_num"], reverse=True)
+    top_picks = [m for m in sorted_predictions if m["confidence_num"] >= min_confidence]
+    
+    if len(top_picks) < 2:
+        top_picks = sorted_predictions[:3]
+    elif len(top_picks) > max_games:
+        top_picks = top_picks[:max_games]
+        
     total_odds = 1.0
-    category_counts = {}
-
-    for match in sorted_matches:
-        category = match.get("market_cat", "General")
-        if category_counts.get(category, 0) >= 2:
-            continue
-
-        selected_matches.append(match)
-        category_counts[category] = category_counts.get(category, 0) + 1
+    for match in top_picks:
         total_odds *= match.get("odds", 1.50)
-
-        if total_odds >= target_odds:
-            break
-
-    if total_odds < target_odds:
-        for match in sorted_matches:
-            if match not in selected_matches:
-                selected_matches.append(match)
-                total_odds *= match.get("odds", 1.50)
-                if total_odds >= target_odds:
-                    break
-
-    return selected_matches, total_odds
+        
+    return top_picks, total_odds
 
 def send_telegram_broadcast(predictions):
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
@@ -234,31 +199,22 @@ def send_telegram_broadcast(predictions):
         print("⚠️ No upcoming predictions available to broadcast.")
         return
 
-    slip_5, total_5 = build_diverse_ticket(predictions, 5.0, sort_by="confidence")
-    slip_10, total_10 = build_diverse_ticket(predictions, 10.0, sort_by="odds")
-
+    best_picks, total_odds = get_best_today_picks(predictions, min_confidence=85, max_games=5)
     now_str = datetime.now(WAT_TIMEZONE).strftime("%b %d, %Y • %I:%M %p WAT")
 
-    message = "<b>⚽ DAILY PREDICTION TICKETS ⚽</b>\n"
+    message = "<b>⚽ BEST PICKS OF THE DAY ⚽</b>\n"
     message += f"<i>Updated: {now_str}</i>\n\n"
+    message += f"<b>🔥 TOP CONFIDENCE SELECTIONS ({len(best_picks)} Games)</b>\n\n"
 
-    message += "<b>🔥 5-ODDS MEDIUM SLIP</b>\n"
-    for i, m in enumerate(slip_5, 1):
-        value_tag = " 🔥" if m.get("is_value_pick") else ""
+    for i, m in enumerate(best_picks, 1):
         flag = m.get("flag", "🌐")
-        message += f"{i}. {flag} <b>{m['home_team']} vs {m['away_team']}</b> ({m['league']}){value_tag}\n"
+        message += f"{i}. {flag} <b>{m['home_team']} vs {m['away_team']}</b> ({m['league']})\n"
         message += f"   🗓️ {m['match_date']} • ⏰ {m['kickoff_wat']}\n"
         message += f"   👉 Pick: <code>{m['prediction']}</code> (@{m['odds']:.2f})\n"
-    message += f"💵 <b>Total Odds: ~{total_5:.2f}</b>\n\n"
+        message += f"   📊 Confidence: <b>{m['confidence']}</b>\n\n"
 
-    message += "<b>🚀 10+ HIGH-ODDS TICKET</b>\n"
-    for i, m in enumerate(slip_10, 1):
-        value_tag = " 🔥" if m.get("is_value_pick") else ""
-        flag = m.get("flag", "🌐")
-        message += f"{i}. {flag} <b>{m['home_team']} vs {m['away_team']}</b> ({m['league']}){value_tag}\n"
-        message += f"   🗓️ {m['match_date']} • ⏰ {m['kickoff_wat']}\n"
-        message += f"   👉 Pick: <code>{m['prediction']}</code> (@{m['odds']:.2f})\n"
-    message += f"💥 <b>Total Combined Odds: ~{total_10:.2f}</b>"
+    message += f"💵 <b>Combined Total Odds: ~{total_odds:.2f}</b>\n"
+    message += "🎯 <i>Filtered strictly for maximum win probability.</i>"
 
     reply_markup = {
         "inline_keyboard": [
@@ -277,7 +233,7 @@ def send_telegram_broadcast(predictions):
     try:
         response = requests.post(telegram_url, json=payload)
         response.raise_for_status()
-        print("🚀 Telegram ticket broadcast posted successfully!")
+        print("🚀 Telegram Best Picks broadcast posted successfully!")
     except Exception as e:
         print(f"❌ Failed to broadcast to Telegram: {e}")
 
@@ -307,4 +263,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
+        
