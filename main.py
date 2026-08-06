@@ -169,18 +169,24 @@ def process_fixtures(fixtures):
         }
         predictions_data.append(match_info)
 
-    predictions_data.sort(key=lambda x: x["confidence_num"], reverse=True)
-    for index, match in enumerate(predictions_data, start=1):
-        match["rank"] = index
-
     return predictions_data
 
 def get_best_today_picks(predictions, min_confidence=85, max_games=5):
-    sorted_predictions = sorted(predictions, key=lambda x: x["confidence_num"], reverse=True)
-    top_picks = [m for m in sorted_predictions if m["confidence_num"] >= min_confidence]
+    today_str = datetime.now(WAT_TIMEZONE).strftime("%b %d")
+    
+    # Priority 1: Strictly Today's matches
+    today_matches = [m for m in predictions if m.get("match_date") == today_str]
+    
+    if len(today_matches) >= 2:
+        candidate_pool = sorted(today_matches, key=lambda x: x["confidence_num"], reverse=True)
+    else:
+        # Priority 2: Fallback to all upcoming if today is late or empty
+        candidate_pool = sorted(predictions, key=lambda x: x["confidence_num"], reverse=True)
+
+    top_picks = [m for m in candidate_pool if m["confidence_num"] >= min_confidence]
     
     if len(top_picks) < 2:
-        top_picks = sorted_predictions[:3]
+        top_picks = candidate_pool[:3]
     elif len(top_picks) > max_games:
         top_picks = top_picks[:max_games]
         
@@ -190,16 +196,15 @@ def get_best_today_picks(predictions, min_confidence=85, max_games=5):
         
     return top_picks, total_odds
 
-def send_telegram_broadcast(predictions):
+def send_telegram_broadcast(best_picks, total_odds):
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
         print("ℹ️ Telegram credentials missing. Skipping broadcast.")
         return
 
-    if not predictions:
+    if not best_picks:
         print("⚠️ No upcoming predictions available to broadcast.")
         return
 
-    best_picks, total_odds = get_best_today_picks(predictions, min_confidence=85, max_games=5)
     now_str = datetime.now(WAT_TIMEZONE).strftime("%b %d, %Y • %I:%M %p WAT")
 
     message = "<b>⚽ BEST PICKS OF THE DAY ⚽</b>\n"
@@ -248,10 +253,14 @@ def main():
         print("⚠️ No lower league matches scheduled today or tomorrow.")
         predictions = []
 
+    best_picks, total_odds = get_best_today_picks(predictions, min_confidence=85, max_games=5)
+
     now_wat = datetime.now(WAT_TIMEZONE).strftime("%Y-%m-%d %I:%M %p WAT")
     
     output_payload = {
         "last_updated": now_wat,
+        "best_picks": best_picks,
+        "total_best_odds": round(total_odds, 2),
         "predictions": predictions
     }
 
@@ -259,8 +268,8 @@ def main():
         json.dump(output_payload, f, indent=4)
 
     print(f"🎉 File generated at {now_wat}: predictions.json")
-    send_telegram_broadcast(predictions)
+    send_telegram_broadcast(best_picks, total_odds)
 
 if __name__ == "__main__":
     main()
-        
+                  
