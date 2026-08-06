@@ -28,7 +28,7 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
-            padding: 20px 15px;
+            padding: 20px 15px 40px;
             max-width: 900px;
             margin: 0 auto;
             line-height: 1.5;
@@ -150,14 +150,56 @@
             font-weight: 600;
         }
 
-        /* All Predictions Grid */
+        /* Market Filter Bar */
+        .filter-section {
+            margin-bottom: 20px;
+        }
+
+        .filter-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
         .section-title {
             font-size: 1.2rem;
             font-weight: 700;
-            margin-bottom: 15px;
             color: var(--text-main);
         }
 
+        .filter-bar {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 6px;
+            scrollbar-width: none;
+        }
+
+        .filter-bar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .filter-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            color: var(--text-muted);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--accent-blue);
+            border-color: rgba(56, 189, 248, 0.4);
+        }
+
+        /* All Predictions Grid */
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -205,6 +247,48 @@
             font-size: 0.85rem;
         }
 
+        /* Telegram CTA Footer Card */
+        .telegram-cta {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(22, 27, 34, 0.8) 100%);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 40px;
+            text-align: center;
+            backdrop-filter: var(--glass-blur);
+        }
+
+        .telegram-cta h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            margin-bottom: 6px;
+        }
+
+        .telegram-cta p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 14px;
+        }
+
+        .telegram-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--accent-blue);
+            color: #0b0e14;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 700;
+            font-size: 0.88rem;
+            text-decoration: none;
+            transition: transform 0.2s ease;
+        }
+
+        .telegram-btn:active {
+            transform: scale(0.96);
+        }
+
         #loading {
             text-align: center;
             padding: 40px;
@@ -230,12 +314,33 @@
         <div id="best-picks-list"></div>
     </section>
 
-    <h2 class="section-title">⚽ All Lower League Predictions</h2>
+    <section class="filter-section">
+        <div class="filter-title-row">
+            <h2 class="section-title">⚽ All Lower League Predictions</h2>
+        </div>
+        <div class="filter-bar">
+            <button class="filter-btn active" onclick="filterMarket('ALL', this)">All Markets</button>
+            <button class="filter-btn" onclick="filterMarket('Straight Pick', this)">Straight Picks</button>
+            <button class="filter-btn" onclick="filterMarket('Goals', this)">Goals</button>
+            <button class="filter-btn" onclick="filterMarket('Double Chance', this)">Double Chance</button>
+            <button class="filter-btn" onclick="filterMarket('BTTS', this)">BTTS</button>
+        </div>
+    </section>
+
     <div id="loading">Loading today's fixtures...</div>
     <div class="grid" id="predictions-grid"></div>
 
+    <div class="telegram-cta">
+        <h3>💬 Join Our Official Telegram Channel</h3>
+        <p>Get instant updates, match recaps, and early picks sent straight to your phone.</p>
+        <a href="https://t.me/@my_daily_picks" target="_blank" class="telegram-btn">
+            ✈️ Join Telegram Channel
+        </a>
+    </div>
+
     <script>
         let currentBestPicks = [];
+        let allPredictions = [];
 
         async function loadPredictions() {
             try {
@@ -266,31 +371,55 @@
                     bestContainer.style.display = 'block';
                 }
 
-                // 2. Render All Predictions
-                const grid = document.getElementById('predictions-grid');
+                // 2. Store & Render All Predictions
                 document.getElementById('loading').style.display = 'none';
-
                 if (data.predictions && data.predictions.length > 0) {
-                    grid.innerHTML = data.predictions.map(item => `
-                        <div class="card">
-                            <div class="card-meta">
-                                <span>${item.flag || '🌐'} ${item.league}</span>
-                                <span>🗓️ ${item.match_date || 'Today'} • ⏰ ${item.kickoff_wat}</span>
-                            </div>
-                            <div class="card-match">${item.match}</div>
-                            <div class="card-footer">
-                                <span class="pick-name">${item.prediction}</span>
-                                <span class="confidence">${item.confidence}</span>
-                            </div>
-                        </div>
-                    `).join('');
+                    allPredictions = data.predictions;
+                    renderGrid(allPredictions);
                 } else {
-                    grid.innerHTML = '<p style="color:var(--text-muted);">No lower league matches available at the moment.</p>';
+                    document.getElementById('predictions-grid').innerHTML = '<p style="color:var(--text-muted);">No lower league matches available at the moment.</p>';
                 }
 
             } catch (error) {
                 console.error("Error loading predictions:", error);
                 document.getElementById('loading').innerText = "Unable to load predictions. Please refresh.";
+            }
+        }
+
+        function renderGrid(matches) {
+            const grid = document.getElementById('predictions-grid');
+            if (!matches || matches.length === 0) {
+                grid.innerHTML = '<p style="color:var(--text-muted); grid-column: 1 / -1; text-align: center; padding: 20px;">No predictions match this market filter.</p>';
+                return;
+            }
+
+            grid.innerHTML = matches.map(item => `
+                <div class="card">
+                    <div class="card-meta">
+                        <span>${item.flag || '🌐'} ${item.league}</span>
+                        <span>🗓️ ${item.match_date || 'Today'} • ⏰ ${item.kickoff_wat}</span>
+                    </div>
+                    <div class="card-match">${item.match}</div>
+                    <div class="card-footer">
+                        <span class="pick-name">${item.prediction}</span>
+                        <span class="confidence">${item.confidence}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterMarket(category, btnElement) {
+            // Manage Active Class
+            const buttons = document.querySelectorAll('.filter-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            btnElement.classList.add('active');
+
+            // Filter Data
+            if (category === 'ALL') {
+                renderGrid(allPredictions);
+            } else {
+                const filtered = allPredictions.filter(item => item.market_cat === category);
+                renderGrid(filtered);
             }
         }
 
