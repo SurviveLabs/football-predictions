@@ -3,595 +3,269 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lower League Football Predictions</title>
+    <title>Survive Predictions — AI Football Analytics</title>
     <style>
         :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --accent-color: #10b981;
-            --accent-hover: #059669;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --border-color: #334155;
-            --badge-bg: #3b82f6;
-            --value-bg: #f59e0b;
-            --win-color: #10b981;
-            --loss-color: #ef4444;
-            --drawer-bg: #0f172ae6;
+            --bg-color: #0b0e14;
+            --card-bg: rgba(22, 27, 34, 0.75);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --gold-primary: #f5c518;
+            --gold-soft: rgba(245, 197, 24, 0.15);
+            --text-main: #f0f6fc;
+            --text-muted: #8b949e;
+            --accent-green: #2ea44f;
+            --accent-blue: #38bdf8;
+            --glass-blur: blur(12px);
         }
 
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
 
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
-            padding: 20px 12px 100px 12px;
-            display: flex;
-            justify-content: center;
-        }
-
-        .app-container {
-            width: 100%;
-            max-width: 650px;
+            padding: 20px 15px;
+            max-width: 900px;
+            margin: 0 auto;
+            line-height: 1.5;
         }
 
         header {
             text-align: center;
-            margin-bottom: 20px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 25px;
         }
 
         header h1 {
-            font-size: 1.6rem;
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
             color: var(--text-main);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
         }
 
         header p {
+            color: var(--text-muted);
             font-size: 0.85rem;
-            color: var(--text-muted);
-            margin-top: 6px;
+            margin-top: 4px;
         }
 
-        .status-container {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            margin-top: 10px;
-            flex-wrap: wrap;
+        /* Hero Card for Best Picks */
+        .featured-card {
+            background: linear-gradient(135deg, rgba(245, 197, 24, 0.08) 0%, rgba(22, 27, 34, 0.9) 100%);
+            border: 1px solid rgba(245, 197, 24, 0.3);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 30px;
+            backdrop-filter: var(--glass-blur);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
         }
 
-        .status-bar {
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--accent-color);
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        .winrate-badge {
-            background: rgba(245, 158, 11, 0.15);
-            color: var(--value-bg);
-            border: 1px solid rgba(245, 158, 11, 0.3);
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 700;
-        }
-
-        .filter-bar {
-            display: flex;
-            gap: 8px;
-            overflow-x: auto;
-            padding-bottom: 12px;
-            margin-bottom: 16px;
-            scrollbar-width: none;
-        }
-
-        .filter-bar::-webkit-scrollbar {
-            display: none;
-        }
-
-        .filter-btn {
-            background-color: var(--card-bg);
-            color: var(--text-muted);
-            border: 1px solid var(--border-color);
-            padding: 8px 14px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            white-space: nowrap;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .filter-btn:hover {
-            border-color: var(--accent-color);
-            color: var(--text-main);
-        }
-
-        .filter-btn.active {
-            background-color: var(--accent-color);
-            color: #ffffff;
-            border-color: var(--accent-color);
-        }
-
-        .card {
-            background-color: var(--card-bg);
-            border: 2px solid var(--border-color);
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 14px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-            transition: all 0.2s ease;
-            position: relative;
-            cursor: pointer;
-        }
-
-        .card:hover {
-            border-color: var(--accent-color);
-        }
-
-        .card.selected {
-            border-color: var(--accent-color);
-            background-color: rgba(16, 185, 129, 0.08);
-        }
-
-        .card-header {
+        .featured-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
-            font-size: 0.8rem;
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 12px;
+            margin-bottom: 16px;
         }
 
-        .league-badge {
-            background-color: #334155;
-            color: #e2e8f0;
-            padding: 3px 8px;
-            border-radius: 6px;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.7rem;
-        }
-
-        .value-badge {
-            background-color: var(--value-bg);
-            color: #000000;
-            padding: 2px 7px;
-            border-radius: 6px;
-            font-weight: 800;
-            font-size: 0.68rem;
-            text-transform: uppercase;
-            margin-left: 6px;
-            box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
-        }
-
-        .result-badge {
-            padding: 3px 8px;
-            border-radius: 6px;
-            font-weight: 800;
-            font-size: 0.75rem;
-            color: #ffffff;
-        }
-
-        .result-badge.win { background-color: var(--win-color); }
-        .result-badge.loss { background-color: var(--loss-color); }
-
-        .match-time {
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        .match-teams {
+        .featured-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
             font-size: 1.1rem;
             font-weight: 700;
-            margin-bottom: 12px;
+            color: var(--gold-primary);
+        }
+
+        .odds-badge {
+            background: var(--gold-soft);
+            color: var(--gold-primary);
+            border: 1px solid rgba(245, 197, 24, 0.4);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .best-pick-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(11, 14, 20, 0.6);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin-bottom: 10px;
+        }
+
+        .match-info h4 {
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .match-info p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .pick-tag {
+            text-align: right;
+        }
+
+        .pick-name {
+            display: inline-block;
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--accent-blue);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        /* All Predictions Grid */
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 15px;
             color: var(--text-main);
-            text-align: center;
         }
 
-        .match-teams span {
-            color: var(--accent-color);
-            margin: 0 6px;
-            font-weight: 400;
-            font-size: 0.9rem;
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
         }
 
-        .score-display {
-            color: #f59e0b;
-            font-weight: 800;
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 16px;
+            backdrop-filter: var(--glass-blur);
+            transition: transform 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        .card-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .card-match {
             font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 12px;
         }
 
         .card-footer {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background-color: rgba(15, 23, 42, 0.5);
-            padding: 10px 12px;
-            border-radius: 8px;
-            margin-top: 8px;
-        }
-
-        .prediction-pick {
-            font-weight: 600;
-            font-size: 0.9rem;
-            color: var(--accent-color);
-        }
-
-        .match-odds {
-            background-color: var(--badge-bg);
-            color: #ffffff;
-            padding: 2px 8px;
-            border-radius: 6px;
-            font-weight: 700;
-            font-size: 0.85rem;
-        }
-
-        .card-actions {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .btn-copy-single {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            cursor: pointer;
+            padding-top: 10px;
+            border-top: 1px solid var(--card-border);
         }
 
         .confidence {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-        }
-
-        .select-checkbox {
-            width: 18px;
-            height: 18px;
-            border-radius: 4px;
-            border: 2px solid var(--border-color);
-            display: inline-block;
-            margin-right: 8px;
-            vertical-align: middle;
-        }
-
-        .card.selected .select-checkbox {
-            background-color: var(--accent-color);
-            border-color: var(--accent-color);
-        }
-
-        .slip-drawer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background-color: var(--drawer-bg);
-            backdrop-filter: blur(10px);
-            border-top: 1px solid var(--border-color);
-            padding: 14px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 1000;
-            transition: transform 0.3s ease;
-        }
-
-        .slip-drawer.hidden { transform: translateY(100%); }
-
-        .btn-copy-slip {
-            background-color: var(--accent-color);
-            color: #ffffff;
-            border: none;
-            padding: 10px 18px;
-            border-radius: 8px;
+            color: var(--accent-green);
             font-weight: 700;
-            font-size: 0.9rem;
-            cursor: pointer;
-        }
-
-        .toast {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%) translateY(-100px);
-            background-color: var(--accent-color);
-            color: #ffffff;
-            padding: 10px 20px;
-            border-radius: 25px;
-            font-weight: 600;
             font-size: 0.85rem;
-            z-index: 2000;
-            transition: transform 0.3s ease;
         }
 
-        .toast.show { transform: translateX(-50%) translateY(0); }
-
-        .state-msg {
+        #loading {
             text-align: center;
-            padding: 40px 20px;
-            color: var(--text-muted);
-            font-size: 0.95rem;
-        }
-
-        footer {
-            text-align: center;
-            margin-top: 30px;
-            font-size: 0.75rem;
+            padding: 40px;
             color: var(--text-muted);
         }
     </style>
 </head>
 <body>
 
-    <div class="app-container">
-        <header>
-            <h1>⚽ Lower League Picks</h1>
-            <p id="last-updated">Checking for live predictions...</p>
-            <div class="status-container">
-                <div class="status-bar">⚡ Auto-Updated Live Data</div>
-                <div id="winrate-badge" class="winrate-badge">🎯 Win Rate: Calculating...</div>
-            </div>
-        </header>
+    <header>
+        <h1>⚡ Survive Predictions</h1>
+        <p id="last-updated">Updating live predictions...</p>
+    </header>
 
-        <nav class="filter-bar">
-            <button class="filter-btn active" onclick="filterPredictions('All')">All Matches</button>
-            <button class="filter-btn" onclick="filterPredictions('Value')">🔥 Value Picks</button>
-            <button class="filter-btn" onclick="filterPredictions('Results')">🏆 Results / Finished</button>
-            <button class="filter-btn" onclick="filterPredictions('Straight Pick')">Straight Pick</button>
-            <button class="filter-btn" onclick="filterPredictions('Goals')">Goals (Over/BTTS)</button>
-            <button class="filter-btn" onclick="filterPredictions('Double Chance')">Double Chance</button>
-        </nav>
-
-        <main id="predictions-container">
-            <div class="state-msg">🔄 Loading predictions and stats...</div>
-        </main>
-
-        <footer>
-            <p>Automated Football Predictions Platform • Powered by GitHub Actions</p>
-        </footer>
-    </div>
-
-    <div id="slip-drawer" class="slip-drawer hidden">
-        <div>
-            <div id="slip-count" class="slip-count">0 Picks Selected</div>
-            <div id="slip-odds" class="slip-odds">Total Odds: @1.00</div>
+    <section class="featured-card" id="best-picks-container" style="display: none;">
+        <div class="featured-header">
+            <div class="featured-title">🔥 Best Picks Today</div>
+            <div class="odds-badge" id="total-odds">Odds: ~1.00</div>
         </div>
-        <button class="btn-copy-slip" onclick="copyCustomSlip()">📋 Copy Custom Slip</button>
-    </div>
+        <div id="best-picks-list"></div>
+    </section>
 
-    <div id="toast" class="toast">Copied to clipboard! 📋</div>
+    <h2 class="section-title">⚽ All Lower League Predictions</h2>
+    <div id="loading">Loading today's fixtures...</div>
+    <div class="grid" id="predictions-grid"></div>
 
     <script>
-        let allPredictions = [];
-        let selectedPicks = [];
-        let currentFilter = 'All';
-
-        document.addEventListener("DOMContentLoaded", () => {
-            fetchPredictions();
-            fetchStats();
-        });
-
-        async function fetchStats() {
-            const winRateEl = document.getElementById("winrate-badge");
+        async function loadPredictions() {
             try {
-                const res = await fetch(`stats.json?t=${new Date().getTime()}`);
-                if (res.ok) {
-                    const stats = await res.json();
-                    if (stats.win_rate) {
-                        winRateEl.textContent = `🎯 Win Rate: ${stats.win_rate}% (${stats.total_won || 0}W / ${stats.total_lost || 0}L)`;
-                        return;
-                    }
-                }
-                winRateEl.textContent = "🎯 Win Rate: 84.5% (Verified)";
-            } catch (e) {
-                winRateEl.textContent = "🎯 Win Rate: 84.5% (Verified)";
-            }
-        }
-
-        async function fetchPredictions() {
-            const container = document.getElementById("predictions-container");
-            const lastUpdatedEl = document.getElementById("last-updated");
-
-            try {
-                const response = await fetch(`predictions.json?t=${new Date().getTime()}`);
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
+                const response = await fetch('./predictions.json');
                 const data = await response.json();
 
-                if (lastUpdatedEl && data.last_updated) {
-                    lastUpdatedEl.textContent = `Last Updated: ${data.last_updated}`;
+                document.getElementById('last-updated').innerText = `Updated: ${data.last_updated || 'Just now'}`;
+
+                // 1. Render Best Picks Section
+                if (data.best_picks && data.best_picks.length > 0) {
+                    const bestContainer = document.getElementById('best-picks-container');
+                    const bestList = document.getElementById('best-picks-list');
+                    document.getElementById('total-odds').innerText = `Combined Odds: ~${data.total_best_odds || '0.00'}`;
+                    
+                    bestList.innerHTML = data.best_picks.map(item => `
+                        <div class="best-pick-item">
+                            <div class="match-info">
+                                <h4>${item.flag || '🌐'} ${item.match}</h4>
+                                <p>${item.league} • ${item.kickoff_wat}</p>
+                            </div>
+                            <div class="pick-tag">
+                                <span class="pick-name">${item.prediction}</span>
+                            </div>
+                        </div>
+                    `).join('');
+
+                    bestContainer.style.display = 'block';
                 }
 
-                allPredictions = data.predictions || [];
+                // 2. Render All Predictions
+                const grid = document.getElementById('predictions-grid');
+                document.getElementById('loading').style.display = 'none';
 
-                if (allPredictions.length === 0) {
-                    container.innerHTML = `<div class="state-msg">⚠️ No lower league predictions available for today or tomorrow.</div>`;
-                    return;
+                if (data.predictions && data.predictions.length > 0) {
+                    grid.innerHTML = data.predictions.map(item => `
+                        <div class="card">
+                            <div class="card-meta">
+                                <span>${item.flag || '🌐'} ${item.league}</span>
+                                <span>⏰ ${item.kickoff_wat}</span>
+                            </div>
+                            <div class="card-match">${item.match}</div>
+                            <div class="card-footer">
+                                <span class="pick-name">${item.prediction}</span>
+                                <span class="confidence">${item.confidence}</span>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    grid.innerHTML = '<p style="color:var(--text-muted);">No lower league matches available at the moment.</p>';
                 }
-
-                renderPredictions();
 
             } catch (error) {
-                container.innerHTML = `<div class="state-msg" style="color: #ef4444;">❌ Failed to load predictions. Please refresh.</div>`;
+                console.error("Error loading predictions:", error);
+                document.getElementById('loading').innerText = "Unable to load predictions. Please refresh.";
             }
         }
 
-        function filterPredictions(category) {
-            currentFilter = category;
-
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.textContent.includes(category) || (category === 'All' && btn.textContent === 'All Matches')) {
-                    btn.classList.add('active');
-                }
-            });
-
-            renderPredictions();
-        }
-
-        function renderPredictions() {
-            const container = document.getElementById("predictions-container");
-            container.innerHTML = "";
-
-            let filtered = allPredictions;
-
-            if (currentFilter === 'Value') {
-                filtered = allPredictions.filter(item => item.is_value_pick);
-            } else if (currentFilter === 'Results') {
-                filtered = allPredictions.filter(item => item.status === 'FINISHED' || item.won !== null);
-            } else if (currentFilter === 'Goals') {
-                filtered = allPredictions.filter(item => item.market_cat === 'Goals' || item.market_cat === 'BTTS');
-            } else if (currentFilter !== 'All') {
-                filtered = allPredictions.filter(item => item.market_cat === currentFilter);
-            }
-
-            if (filtered.length === 0) {
-                container.innerHTML = `<div class="state-msg">No matches found for "${currentFilter}".</div>`;
-                return;
-            }
-
-            filtered.forEach((item) => {
-                const isSelected = selectedPicks.some(p => p.fixture_id === item.fixture_id);
-                const card = document.createElement("div");
-                card.className = `card ${isSelected ? 'selected' : ''}`;
-
-                card.onclick = (e) => {
-                    if (e.target.closest('.btn-copy-single')) return;
-                    togglePick(item);
-                };
-
-                const flag = item.flag || '🌐';
-                const valueBadge = item.is_value_pick ? `<span class="value-badge">🔥 Value Pick</span>` : '';
-                
-                let resultBadge = '';
-                if (item.won === true) {
-                    resultBadge = `<span class="result-badge win">✅ WIN</span>`;
-                } else if (item.won === false) {
-                    resultBadge = `<span class="result-badge loss">❌ LOSS</span>`;
-                }
-
-                const scoreText = (item.score && item.score !== 'VS') 
-                    ? `<span class="score-display">${escapeHtml(item.score)}</span>` 
-                    : `<span>vs</span>`;
-
-                card.innerHTML = `
-                    <div class="card-header">
-                        <div>
-                            <span class="select-checkbox"></span>
-                            <span class="league-badge">${flag} ${escapeHtml(item.league)}</span>
-                            ${valueBadge}
-                        </div>
-                        <div>
-                            ${resultBadge ? resultBadge : `<span class="match-time">🗓️ ${escapeHtml(item.match_date)} • ⏰ ${escapeHtml(item.kickoff_wat)}</span>`}
-                        </div>
-                    </div>
-                    <div class="match-teams">
-                        ${escapeHtml(item.home_team)} ${scoreText} ${escapeHtml(item.away_team)}
-                    </div>
-                    <div class="card-footer">
-                        <div>
-                            <div class="prediction-pick">👉 ${escapeHtml(item.prediction)}</div>
-                            <div class="confidence">Confidence: ${escapeHtml(item.confidence)}</div>
-                        </div>
-                        <div class="card-actions">
-                            <button class="btn-copy-single" onclick="copySinglePick('${escapeHtml(item.home_team)} vs ${escapeHtml(item.away_team)}', '${escapeHtml(item.prediction)}', '${item.odds}')">📋 Copy</button>
-                            <span class="match-odds">@${parseFloat(item.odds).toFixed(2)}</span>
-                        </div>
-                    </div>
-                `;
-
-                container.appendChild(card);
-            });
-        }
-
-        function togglePick(item) {
-            const index = selectedPicks.findIndex(p => p.fixture_id === item.fixture_id);
-            if (index > -1) {
-                selectedPicks.splice(index, 1);
-            } else {
-                selectedPicks.push(item);
-            }
-
-            renderPredictions();
-            updateSlipDrawer();
-        }
-
-        function updateSlipDrawer() {
-            const drawer = document.getElementById("slip-drawer");
-            const countEl = document.getElementById("slip-count");
-            const oddsEl = document.getElementById("slip-odds");
-
-            if (selectedPicks.length === 0) {
-                drawer.classList.add("hidden");
-                return;
-            }
-
-            drawer.classList.remove("hidden");
-            countEl.textContent = `${selectedPicks.length} Pick${selectedPicks.length > 1 ? 's' : ''} Selected`;
-
-            const totalOdds = selectedPicks.reduce((acc, match) => acc * parseFloat(match.odds), 1.0);
-            oddsEl.textContent = `Total Odds: ~${totalOdds.toFixed(2)}`;
-        }
-
-        function copySinglePick(matchText, prediction, odds) {
-            const textToCopy = `⚽ ${matchText}\n👉 Pick: ${prediction} (@${parseFloat(odds).toFixed(2)})`;
-            copyToClipboard(textToCopy);
-        }
-
-        function copyCustomSlip() {
-            if (selectedPicks.length === 0) return;
-
-            const totalOdds = selectedPicks.reduce((acc, match) => acc * parseFloat(match.odds), 1.0);
-            
-            let slipText = `⚽ *MY CUSTOM PREDICTION SLIP*\n\n`;
-            selectedPicks.forEach((m, idx) => {
-                const flag = m.flag || '🌐';
-                slipText += `${idx + 1}. ${flag} *${m.home_team} vs ${m.away_team}*\n`;
-                slipText += `   🗓️ ${m.match_date} • ⏰ ${m.kickoff_wat}\n`;
-                slipText += `   👉 Pick: ${m.prediction} (@${parseFloat(m.odds).toFixed(2)})\n\n`;
-            });
-            slipText += `💵 *Total Combined Odds: ~${totalOdds.toFixed(2)}*`;
-
-            copyToClipboard(slipText);
-        }
-
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                showToast("Copied to clipboard! 📋");
-            });
-        }
-
-        function showToast(message) {
-            const toast = document.getElementById("toast");
-            toast.textContent = message;
-            toast.classList.add("show");
-            setTimeout(() => toast.classList.remove("show"), 2000);
-        }
-
-        function escapeHtml(str) {
-            if (!str) return '';
-            return String(str)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
+        loadPredictions();
     </script>
 </body>
 </html>
