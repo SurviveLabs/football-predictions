@@ -81,6 +81,12 @@
             color: var(--gold-primary);
         }
 
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
         .odds-badge {
             background: var(--gold-soft);
             color: var(--gold-primary);
@@ -89,6 +95,22 @@
             border-radius: 20px;
             font-weight: 700;
             font-size: 0.85rem;
+        }
+
+        .copy-btn {
+            background: var(--gold-primary);
+            color: #000;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .copy-btn:active {
+            transform: scale(0.95);
         }
 
         .best-pick-item {
@@ -200,7 +222,10 @@
     <section class="featured-card" id="best-picks-container" style="display: none;">
         <div class="featured-header">
             <div class="featured-title">🔥 Best Picks Today</div>
-            <div class="odds-badge" id="total-odds">Odds: ~1.00</div>
+            <div class="header-actions">
+                <div class="odds-badge" id="total-odds">Odds: ~1.00</div>
+                <button class="copy-btn" onclick="copyBestPicks()" id="copy-btn">📋 Copy Slip</button>
+            </div>
         </div>
         <div id="best-picks-list"></div>
     </section>
@@ -210,6 +235,8 @@
     <div class="grid" id="predictions-grid"></div>
 
     <script>
+        let currentBestPicks = [];
+
         async function loadPredictions() {
             try {
                 const response = await fetch('./predictions.json');
@@ -219,9 +246,10 @@
 
                 // 1. Render Best Picks Section
                 if (data.best_picks && data.best_picks.length > 0) {
+                    currentBestPicks = data.best_picks;
                     const bestContainer = document.getElementById('best-picks-container');
                     const bestList = document.getElementById('best-picks-list');
-                    document.getElementById('total-odds').innerText = `Combined Odds: ~${data.total_best_odds || '0.00'}`;
+                    document.getElementById('total-odds').innerText = `Odds: ~${data.total_best_odds || '0.00'}`;
                     
                     bestList.innerHTML = data.best_picks.map(item => `
                         <div class="best-pick-item">
@@ -264,6 +292,31 @@
                 console.error("Error loading predictions:", error);
                 document.getElementById('loading').innerText = "Unable to load predictions. Please refresh.";
             }
+        }
+
+        function copyBestPicks() {
+            if (!currentBestPicks || currentBestPicks.length === 0) return;
+
+            let textToCopy = "⚽ *SURVIVE PREDICTIONS — BEST PICKS TODAY* ⚽\n\n";
+            currentBestPicks.forEach((m, index) => {
+                textToCopy += `${index + 1}. ${m.flag || '🌐'} ${m.match}\n`;
+                textToCopy += `   👉 Pick: ${m.prediction} (@${m.odds})\n\n`;
+            });
+
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const btn = document.getElementById('copy-btn');
+                btn.innerText = "✅ Copied!";
+                btn.style.background = "#2ea44f";
+                btn.style.color = "#fff";
+
+                setTimeout(() => {
+                    btn.innerText = "📋 Copy Slip";
+                    btn.style.background = "#f5c518";
+                    btn.style.color = "#000";
+                }, 2000);
+            }).catch(err => {
+                alert("Failed to copy. Please try manually highlighting.");
+            });
         }
 
         loadPredictions();
