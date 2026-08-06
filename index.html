@@ -108,8 +108,9 @@
         }
 
         .match-info p {
-            font-size: 0.75rem;
+            font-size: 0.78rem;
             color: var(--text-muted);
+            margin-top: 2px;
         }
 
         .pick-tag {
@@ -226,7 +227,7 @@
                         <div class="best-pick-item">
                             <div class="match-info">
                                 <h4>${item.flag || '🌐'} ${item.match}</h4>
-                                <p>${item.league} • ${item.kickoff_wat}</p>
+                                <p>🗓️ ${item.match_date || 'Today'} • ${item.league} • ⏰ ${item.kickoff_wat}</p>
                             </div>
                             <div class="pick-tag">
                                 <span class="pick-name">${item.prediction}</span>
@@ -246,7 +247,7 @@
                         <div class="card">
                             <div class="card-meta">
                                 <span>${item.flag || '🌐'} ${item.league}</span>
-                                <span>⏰ ${item.kickoff_wat}</span>
+                                <span>🗓️ ${item.match_date || 'Today'} • ⏰ ${item.kickoff_wat}</span>
                             </div>
                             <div class="card-match">${item.match}</div>
                             <div class="card-footer">
