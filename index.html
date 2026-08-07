@@ -454,7 +454,10 @@
                 alert("Failed to copy. Please try manually highlighting.");
             });
         }
-
+             if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js');
+          }
+        
         loadPredictions();
     </script>
 </body>
