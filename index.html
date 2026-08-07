@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Survive Predictions — AI Football Analytics</title>
+    
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚽</text></svg>">
+
     <style>
         :root {
             --bg-color: #0b0e14;
@@ -333,7 +336,7 @@
     <div class="telegram-cta">
         <h3>💬 Join Our Official Telegram Channel</h3>
         <p>Get instant updates, match recaps, and early picks sent straight to your phone.</p>
-        <a href="https://t.me/@my_daily_picks" target="_blank" class="telegram-btn">
+        <a href="https://t.me/your_telegram_channel" target="_blank" class="telegram-btn">
             ✈️ Join Telegram Channel
         </a>
     </div>
@@ -409,12 +412,10 @@
         }
 
         function filterMarket(category, btnElement) {
-            // Manage Active Class
             const buttons = document.querySelectorAll('.filter-btn');
             buttons.forEach(btn => btn.classList.remove('active'));
             btnElement.classList.add('active');
 
-            // Filter Data
             if (category === 'ALL') {
                 renderGrid(allPredictions);
             } else {
