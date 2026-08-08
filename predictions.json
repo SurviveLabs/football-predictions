@@ -1,5 +1,5 @@
 {
-    "last_updated": "2026-08-08 03:58 AM WAT",
+    "last_updated": "2026-08-08 09:06 AM WAT",
     "best_picks": [
         {
             "fixture_id": 1606602,
@@ -104,26 +104,6 @@
     ],
     "total_best_odds": 3.44,
     "predictions": [
-        {
-            "fixture_id": 1606596,
-            "country": "Japan",
-            "flag": "\ud83c\uddef\ud83c\uddf5",
-            "league": "J2 League",
-            "match": "Consadole Sapporo vs Tokushima Vortis",
-            "home_team": "Consadole Sapporo",
-            "away_team": "Tokushima Vortis",
-            "match_date": "Aug 08",
-            "kickoff_wat": "06:45 AM WAT",
-            "prediction": "Over 2.5 Goals",
-            "market_cat": "Goals",
-            "confidence_num": 81,
-            "confidence": "81%",
-            "odds": 1.82,
-            "status": "UPCOMING",
-            "score": "VS",
-            "won": null,
-            "date": "2026-08-08T06:45:00+01:00"
-        },
         {
             "fixture_id": 1554344,
             "country": "Japan",
