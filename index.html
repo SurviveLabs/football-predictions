@@ -4,13 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Survive Predictions — AI Football Analytics</title>
-
+    
     <link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#0b0e14">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    
-    
+    <meta name="theme-color" content="#0b0e14">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚽</text></svg>">
 
     <style>
@@ -37,7 +35,7 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
-            padding: 20px 15px 40px;
+            padding: 20px 15px 90px; /* Extra bottom padding so floating button doesn't cover content */
             max-width: 900px;
             margin: 0 auto;
             line-height: 1.5;
@@ -256,46 +254,28 @@
             font-size: 0.85rem;
         }
 
-        /* Telegram CTA Footer Card */
-        .telegram-cta {
-            background: linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(22, 27, 34, 0.8) 100%);
-            border: 1px solid rgba(56, 189, 248, 0.3);
-            border-radius: 16px;
-            padding: 20px;
-            margin-top: 40px;
-            text-align: center;
-            backdrop-filter: var(--glass-blur);
-        }
-
-        .telegram-cta h3 {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--accent-blue);
-            margin-bottom: 6px;
-        }
-
-        .telegram-cta p {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            margin-bottom: 14px;
-        }
-
-        .telegram-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: var(--accent-blue);
+        /* Floating Telegram Widget */
+        .floating-telegram {
+            position: fixed;
+            bottom: 20px;
+            right: 15px;
+            background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
             color: #0b0e14;
-            padding: 10px 20px;
-            border-radius: 25px;
+            padding: 12px 18px;
+            border-radius: 30px;
             font-weight: 700;
             font-size: 0.88rem;
             text-decoration: none;
+            box-shadow: 0 6px 20px rgba(56, 189, 248, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 9999;
             transition: transform 0.2s ease;
         }
 
-        .telegram-btn:active {
-            transform: scale(0.96);
+        .floating-telegram:active {
+            transform: scale(0.92);
         }
 
         #loading {
@@ -339,17 +319,18 @@
     <div id="loading">Loading today's fixtures...</div>
     <div class="grid" id="predictions-grid"></div>
 
-    <div class="telegram-cta">
-        <h3>💬 Join Our Official Telegram Channel</h3>
-        <p>Get instant updates, match recaps, and early picks sent straight to your phone.</p>
-        <a href="https://t.me/your_telegram_channel" target="_blank" class="telegram-btn">
-            ✈️ Join Telegram Channel
-        </a>
-    </div>
+    <a href="https://t.me/my_daily_picks" target="_blank" class="floating-telegram">
+        ✈️ Join Telegram
+    </a>
 
     <script>
         let currentBestPicks = [];
         let allPredictions = [];
+
+        // Register PWA Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js');
+        }
 
         async function loadPredictions() {
             try {
@@ -454,10 +435,7 @@
                 alert("Failed to copy. Please try manually highlighting.");
             });
         }
-             if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js');
-          }
-        
+
         loadPredictions();
     </script>
 </body>
